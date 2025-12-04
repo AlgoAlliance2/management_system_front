@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Badge } from './ui/badge';
 import type { User, Event } from '../types';
@@ -9,7 +10,6 @@ interface UserProfileProps {
   attendingEvents: Event[];
   savedEvents: Event[];
   organizedEvents: Event[];
-  onViewDetails: (eventId: string) => void;
   onToggleSave: (eventId: string) => void;
 }
 
@@ -18,9 +18,10 @@ export function UserProfile({
   attendingEvents,
   savedEvents,
   organizedEvents,
-  onViewDetails,
   onToggleSave,
 }: UserProfileProps) {
+  const navigate = useNavigate();
+
   const roleLabels: Record<string, string> = {
     student: 'Student',
     professor: 'Profesor',
@@ -121,7 +122,7 @@ export function UserProfile({
                 <EventCard
                   key={event.id}
                   event={event}
-                  onViewDetails={onViewDetails}
+                  onViewDetails={(id) => navigate(`/event/${id}`)}
                   onToggleSave={onToggleSave}
                 />
               ))}
@@ -142,7 +143,7 @@ export function UserProfile({
                 <EventCard
                   key={event.id}
                   event={event}
-                  onViewDetails={onViewDetails}
+                  onViewDetails={(id) => navigate(`/event/${id}`)}
                   onToggleSave={onToggleSave}
                 />
               ))}
@@ -164,7 +165,7 @@ export function UserProfile({
                   <EventCard
                     key={event.id}
                     event={event}
-                    onViewDetails={onViewDetails}
+                    onViewDetails={(id) => navigate(`/event/${id}`)}
                     onToggleSave={onToggleSave}
                   />
                 ))}

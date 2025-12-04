@@ -1,3 +1,4 @@
+import { useParams, useNavigate } from "react-router-dom";
 import {
   Calendar,
   MapPin,
@@ -18,8 +19,8 @@ import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { toast } from "sonner";
 
 interface EventDetailsProps {
-  event: Event;
-  onBack: () => void;
+  events: Event[]; // Receive all events to find the specific one
+  // onBack removed - handled by navigate(-1)
   onToggleSave: (eventId: string) => void;
   onToggleAttend: (eventId: string) => void;
 }
@@ -43,11 +44,31 @@ const categoryColors: Record<string, string> = {
 };
 
 export function EventDetails({
-  event,
-  onBack,
+  events,
   onToggleSave,
   onToggleAttend,
 }: EventDetailsProps) {
+  const { id } = useParams(); // Get ID from URL /event/:id
+  const navigate = useNavigate();
+
+  // Find the event matching the ID from the URL
+  const event = events.find((e) => e.id === id);
+
+  // Handle case where event is not found (e.g. invalid URL)
+  if (!event) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+        <h1 className="text-2xl font-bold text-gray-800 mb-4">
+          Evenimentul nu a fost găsit
+        </h1>
+        <p className="text-gray-600 mb-6">
+          Este posibil ca evenimentul să fi fost șters sau link-ul este invalid.
+        </p>
+        <Button onClick={() => navigate("/")}>Înapoi la prima pagină</Button>
+      </div>
+    );
+  }
+
   const attendancePercentage = event.maxAttendees
     ? (event.attendees / event.maxAttendees) * 100
     : 0;
@@ -58,6 +79,8 @@ export function EventDetails({
       : false;
 
   const handleShare = () => {
+    // Copy current URL to clipboard
+    navigator.clipboard.writeText(window.location.href);
     toast.success("Link copiat în clipboard!");
   };
 
@@ -66,9 +89,13 @@ export function EventDetails({
       {/* Hero Section */}
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 py-4">
-          <Button variant="ghost" onClick={onBack} className="mb-4">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate(-1)} // Go back in history
+            className="mb-4"
+          >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Înapoi la evenimente
+            Înapoi
           </Button>
 
           <div className="grid md:grid-cols-2 gap-6">
@@ -249,6 +276,7 @@ export function EventDetails({
                   <Button
                     variant="link"
                     className="p-0 h-auto text-sm text-blue-600"
+                    onClick={() => navigate(`/profile`)} // Just link to generic profile for now
                   >
                     Vezi profil
                   </Button>

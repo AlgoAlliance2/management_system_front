@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from './ui/button';
 import type { Event } from '../types';
@@ -8,11 +9,12 @@ import { EventCard } from './EventCard';
 
 interface CalendarViewProps {
   events: Event[];
-  onViewDetails: (eventId: string) => void;
+  // onViewDetails removed - handled via Router
   onToggleSave: (eventId: string) => void;
 }
 
-export function CalendarView({ events, onViewDetails, onToggleSave }: CalendarViewProps) {
+export function CalendarView({ events, onToggleSave }: CalendarViewProps) {
+  const navigate = useNavigate();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
@@ -118,7 +120,7 @@ export function CalendarView({ events, onViewDetails, onToggleSave }: CalendarVi
                 <EventCard
                   key={event.id}
                   event={event}
-                  onViewDetails={onViewDetails}
+                  onViewDetails={(id) => navigate(`/event/${id}`)}
                   onToggleSave={onToggleSave}
                   compact
                 />
@@ -150,7 +152,7 @@ export function CalendarView({ events, onViewDetails, onToggleSave }: CalendarVi
                   <EventCard
                     key={event.id}
                     event={event}
-                    onViewDetails={onViewDetails}
+                    onViewDetails={(id) => navigate(`/event/${id}`)}
                     onToggleSave={onToggleSave}
                     compact
                   />
