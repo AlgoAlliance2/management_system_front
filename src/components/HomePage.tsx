@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import type { Event, EventCategory } from '../types';
 import { EventCard } from './EventCard';
 import { EventFilters } from './EventFilters';
@@ -5,7 +6,6 @@ import { Skeleton } from './ui/skeleton';
 
 interface HomePageProps {
   events: Event[];
-  onViewDetails: (eventId: string) => void;
   onToggleSave: (eventId: string) => void;
   selectedCategory: EventCategory | 'all';
   onCategoryChange: (category: EventCategory | 'all') => void;
@@ -22,7 +22,6 @@ interface HomePageProps {
 
 export function HomePage({
   events,
-  onViewDetails,
   onToggleSave,
   selectedCategory,
   onCategoryChange,
@@ -36,6 +35,7 @@ export function HomePage({
   hasActiveFilters,
   isLoading = false,
 }: HomePageProps) {
+  const navigate = useNavigate(); // 2. Initialize hook
   return (
     <div className="space-y-6">
       {/* Hero Section */}
@@ -103,7 +103,7 @@ export function HomePage({
               <EventCard
                 key={event.id}
                 event={event}
-                onViewDetails={onViewDetails}
+                onViewDetails={(id) => navigate(`/event/${id}`)}
                 onToggleSave={onToggleSave}
               />
             ))}
