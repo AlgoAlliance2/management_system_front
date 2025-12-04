@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Badge } from './ui/badge';
 import type { User, Event } from '../types';
@@ -20,7 +19,6 @@ export function UserProfile({
   organizedEvents,
   onToggleSave,
 }: UserProfileProps) {
-  const navigate = useNavigate();
 
   const roleLabels: Record<string, string> = {
     student: 'Student',
@@ -122,7 +120,6 @@ export function UserProfile({
                 <EventCard
                   key={event.id}
                   event={event}
-                  onViewDetails={(id) => navigate(`/event/${id}`)}
                   onToggleSave={onToggleSave}
                 />
               ))}
@@ -143,7 +140,6 @@ export function UserProfile({
                 <EventCard
                   key={event.id}
                   event={event}
-                  onViewDetails={(id) => navigate(`/event/${id}`)}
                   onToggleSave={onToggleSave}
                 />
               ))}
@@ -165,7 +161,6 @@ export function UserProfile({
                   <EventCard
                     key={event.id}
                     event={event}
-                    onViewDetails={(id) => navigate(`/event/${id}`)}
                     onToggleSave={onToggleSave}
                   />
                 ))}

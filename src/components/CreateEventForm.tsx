@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom"; // 1. Import hook
 import { ArrowLeft, Upload, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -15,7 +16,6 @@ import type { EventCategory } from "../types";
 import { toast } from "sonner";
 
 interface CreateEventFormProps {
-  onBack: () => void;
   onSubmit: (eventData: any) => void;
 }
 
@@ -28,7 +28,8 @@ const categories: { value: EventCategory; label: string }[] = [
   { value: "cultural", label: "Cultural" },
 ];
 
-export function CreateEventForm({ onBack, onSubmit }: CreateEventFormProps) {
+export function CreateEventForm({ onSubmit }: CreateEventFormProps) {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     title: "",
@@ -92,6 +93,7 @@ export function CreateEventForm({ onBack, onSubmit }: CreateEventFormProps) {
     if (validateStep(step)) {
       onSubmit(formData);
       toast.success("Eveniment creat cu succes!");
+      navigate('/organizer'); // 3. Redirect back to organizer panel after success
     }
   };
 
@@ -106,7 +108,11 @@ export function CreateEventForm({ onBack, onSubmit }: CreateEventFormProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6 max-w-3xl">
-        <Button variant="ghost" onClick={onBack} className="mb-6">
+        <Button 
+            variant="ghost" 
+            onClick={() => navigate(-1)} // 4. Navigate back in history
+            className="mb-6"
+        >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Înapoi
         </Button>

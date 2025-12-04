@@ -3,15 +3,18 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { Lock } from "lucide-react";
+import { Lock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { auth } from "../lib/api";
+import type { User } from "../types";
 
 interface AuthFormProps {
-  onLogin: (email: string, password: string) => void;
-  onRegister: (name: string, email: string, password: string) => void;
+  onLogin: (user: User) => void;
+  onRegister: (user: User) => void;
 }
 
 export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
+  const [isLoading, setIsLoading] = useState(false); // Loading state
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [registerData, setRegisterData] = useState({
     name: "",
@@ -23,66 +26,83 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
 
   const validateEmail = (email: string) => {
     // Check for university email format
-    return email.endsWith("usv.ro") || email.endsWith("usm.ro");
+    return email.endsWith("@student.usv.ro") || email.endsWith("@usm.ro");
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
     if (!loginData.email) {
       newErrors.loginEmail = "Email-ul este obligatoriu";
-    } else if (!validateEmail(loginData.email)) {
-      newErrors.loginEmail =
-        "Trebuie să folosești adresa de email universitară";
-    }
-
+    } 
     if (!loginData.password) {
       newErrors.loginPassword = "Parola este obligatorie";
     }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      setIsLoading(false);
       return;
     }
 
-    onLogin(loginData.email, loginData.password);
-    toast.success("Autentificare reușită!");
+    setIsLoading(true);
+    try {
+      const user = await auth.login(loginData.email, loginData.password);
+      // 2. Success
+      toast.success("Autentificare reușită!");
+      onLogin(user);
+    } catch (error: any) {
+      console.error(error);
+      const msg = error.response?.data?.message || "Eroare la autentificare";
+      setErrors({ ...errors, loginEmail: msg }); // Display error generally or on field
+      toast.error(msg);
+    } finally {
+      setIsLoading(false);
+    }
+
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
-    if (!registerData.name.trim()) {
-      newErrors.name = "Numele este obligatoriu";
-    }
+    if (!registerData.name.trim()) newErrors.name = "Numele este obligatoriu";
+    if (!registerData.email) newErrors.registerEmail = "Email-ul este obligatoriu";
+    else if (!validateEmail(registerData.email)) newErrors.registerEmail = "Adresă invalidă"; // Uncomment when ready
 
-    if (!registerData.email) {
-      newErrors.registerEmail = "Email-ul este obligatoriu";
-    } else if (!validateEmail(registerData.email)) {
-      newErrors.registerEmail =
-        "Trebuie să folosești adresa de email universitară";
-    }
-
-    if (!registerData.password) {
-      newErrors.registerPassword = "Parola este obligatorie";
-    } else if (registerData.password.length < 6) {
-      newErrors.registerPassword =
-        "Parola trebuie să aibă cel puțin 6 caractere";
-    }
-
+    if (!registerData.password) newErrors.registerPassword = "Parola este obligatorie";
+    else if (registerData.password.length < 6) newErrors.registerPassword = "Minim 6 caractere";
+    
     if (registerData.password !== registerData.confirmPassword) {
       newErrors.confirmPassword = "Parolele nu se potrivesc";
     }
 
+    setIsLoading(true);
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      setIsLoading(false);
       return;
     }
 
-    onRegister(registerData.name, registerData.email, registerData.password);
-    toast.success("Cont creat cu succes!");
+    try {
+      // 1. Call Backend
+      const user = await auth.register(
+        registerData.name, 
+        registerData.email, 
+        registerData.password
+      );
+      
+      // 2. Success
+      toast.success("Cont creat cu succes!");
+      onRegister(user);
+    } catch (error: any) {
+      const msg = error.response?.data?.message || "Eroare la înregistrare";
+      toast.error(msg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -125,7 +145,8 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
                   <Input
                     id="login-email"
                     type="email"
-                    placeholder="nume.prenume@student.usv.ro"
+                    disabled={isLoading}
+                    placeholder="student@usv.ro"
                     value={loginData.email}
                     onChange={(e) => {
                       setLoginData({ ...loginData, email: e.target.value });
@@ -133,9 +154,7 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
                     }}
                     className={errors.loginEmail ? "border-red-500" : ""}
                   />
-                  {errors.loginEmail && (
-                    <p className="text-sm text-red-500">{errors.loginEmail}</p>
-                  )}
+                  {errors.loginEmail && <p className="text-sm text-red-500">{errors.loginEmail}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -166,11 +185,8 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
                   )}
                 </div>
 
-                <Button
-                  type="submit"
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                >
-                  Autentificare
+                <Button type="submit" className="w-full bg-blue-600" disabled={isLoading}>
+                  {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Autentificare"}
                 </Button>
 
                 <div className="text-center">
@@ -188,6 +204,7 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
                   <Label htmlFor="register-name">Nume complet</Label>
                   <Input
                     id="register-name"
+                    disabled={isLoading}
                     type="text"
                     placeholder="Nume Prenume"
                     value={registerData.name}
@@ -209,6 +226,7 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
                   <Label htmlFor="register-email">Email universitar</Label>
                   <Input
                     id="register-email"
+                    disabled={isLoading}
                     type="email"
                     placeholder="nume.prenume@student.usv.ro"
                     value={registerData.email}
@@ -284,11 +302,8 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
                   )}
                 </div>
 
-                <Button
-                  type="submit"
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                >
-                  Creează cont
+                <Button type="submit" className="w-full bg-blue-600" disabled={isLoading}>
+                   {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Creează cont"}
                 </Button>
 
                 <p className="text-xs text-gray-500 text-center">
