@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom"; // 1. Import hook
 import { Calendar, MapPin, Users, Bookmark, BookmarkCheck } from "lucide-react";
 import { Card, CardContent, CardFooter } from "./ui/card";
 import { Button } from "./ui/button";
@@ -9,7 +10,6 @@ import { ImageWithFallback } from "./figma/ImageWithFallback";
 
 interface EventCardProps {
   event: Event;
-  onViewDetails: (eventId: string) => void;
   onToggleSave: (eventId: string) => void;
   compact?: boolean;
 }
@@ -34,19 +34,24 @@ const categoryColors: Record<string, string> = {
 
 export function EventCard({
   event,
-  onViewDetails,
   onToggleSave,
   compact = false,
 }: EventCardProps) {
+  const navigate = useNavigate();
+
   const attendancePercentage = event.maxAttendees
     ? (event.attendees / event.maxAttendees) * 100
     : 0;
+
+  const handleViewDetails = () => {
+    navigate(`/event/${event.id}`);
+  };
 
   if (compact) {
     return (
       <Card
         className="hover:shadow-md transition-shadow cursor-pointer"
-        onClick={() => onViewDetails(event.id)}
+        onClick={handleViewDetails} // 3. Use internal handler
       >
         <CardContent className="p-4">
           <div className="flex gap-3">
@@ -74,7 +79,10 @@ export function EventCard({
   }
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+    <Card 
+      className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" // Added cursor-pointer
+      onClick={handleViewDetails} // Make whole card clickable
+    >
       {/* Image */}
       {event.imageUrl && (
         <div className="relative h-48 overflow-hidden bg-gray-100">
@@ -88,7 +96,7 @@ export function EventCard({
             size="icon"
             className="absolute top-2 right-2 bg-white/90 hover:bg-white"
             onClick={(e) => {
-              e.stopPropagation();
+              e.stopPropagation(); // Prevent card click
               onToggleSave(event.id);
             }}
           >
@@ -159,7 +167,10 @@ export function EventCard({
       <CardFooter className="p-4 pt-0 flex gap-2">
         <Button
           className="flex-1 bg-blue-600 hover:bg-blue-700"
-          onClick={() => onViewDetails(event.id)}
+          onClick={(e) => {
+             e.stopPropagation(); // Prevent double navigation trigger
+             handleViewDetails();
+          }}
         >
           Detalii
         </Button>

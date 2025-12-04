@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { X, Bell, Calendar, AlertCircle } from "lucide-react";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
@@ -20,6 +21,7 @@ export function NotificationsPanel({
   onMarkAsRead,
   onMarkAllAsRead,
 }: NotificationsPanelProps) {
+  const navigate = useNavigate();
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const getIcon = (type: string) => {
@@ -32,6 +34,21 @@ export function NotificationsPanel({
         return <Calendar className="h-5 w-5 text-green-600" />;
       default:
         return <Bell className="h-5 w-5 text-gray-600" />;
+    }
+  };
+
+  const handleItemClick = (notification: Notification) => {
+    // 1. Navigate if there is an event ID
+    if (notification.eventId) {
+      navigate(`/event/${notification.eventId}`);
+    }
+
+    // 2. Call parent handler (to close the panel)
+    onNotificationClick(notification);
+
+    // 3. Mark as read if needed
+    if (!notification.read) {
+      onMarkAsRead(notification.id);
     }
   };
 
@@ -81,12 +98,7 @@ export function NotificationsPanel({
                     className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
                       !notification.read ? "bg-blue-50/50" : ""
                     }`}
-                    onClick={() => {
-                      onNotificationClick(notification);
-                      if (!notification.read) {
-                        onMarkAsRead(notification.id);
-                      }
-                    }}
+                    onClick={() => handleItemClick(notification)}
                   >
                     <div className="flex gap-3">
                       <div className="flex-shrink-0 mt-1">
