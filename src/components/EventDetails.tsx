@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import {
   Calendar,
   MapPin,
@@ -19,8 +20,7 @@ import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { toast } from "sonner";
 
 interface EventDetailsProps {
-  events: Event[]; // Receive all events to find the specific one
-  // onBack removed - handled by navigate(-1)
+  events: Event[];
   onToggleSave: (eventId: string) => void;
   onToggleAttend: (eventId: string) => void;
 }
@@ -48,13 +48,11 @@ export function EventDetails({
   onToggleSave,
   onToggleAttend,
 }: EventDetailsProps) {
-  const { id } = useParams(); // Get ID from URL /event/:id
+  const { id } = useParams();
   const navigate = useNavigate();
 
-  // Find the event matching the ID from the URL
   const event = events.find((e) => e.id === id);
 
-  // Handle case where event is not found (e.g. invalid URL)
   if (!event) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
@@ -69,6 +67,62 @@ export function EventDetails({
     );
   }
 
+  /* ===================== COMMENTS (NO OTHER FILE CHANGES) ===================== */
+  const [commentText, setCommentText] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Ensure this state is ALWAYS Comment[] (never undefined)
+  const [comments, setComments] = useState<NonNullable<Event["comments"]>>(
+    event.comments ?? []
+  );
+
+  const handleSubmitComment = async () => {
+    const text = commentText.trim();
+    if (!text) {
+      toast.error("Scrie un comentariu înainte să trimiți.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch(`/api/events/${event.id}/comments`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text }),
+      });
+
+      if (!res.ok) {
+        const msg = await res.text().catch(() => "");
+        throw new Error(msg || "Eroare la trimiterea comentariului.");
+      }
+
+      const created = await res.json();
+
+      setComments((prev) => [
+        {
+          id: created.id ?? `local-${Date.now()}`,
+          userId: created.userId ?? "local-user", // required by your Comment type
+          userName: created.userName ?? "Tu",
+          // If your Comment.date is string in types, replace with: created.date ?? new Date().toISOString()
+          date: created.date ? new Date(created.date) : new Date(),
+          text: created.text ?? text,
+        },
+        ...prev,
+      ]);
+
+      setCommentText("");
+      toast.success("Comentariu trimis!");
+    } catch (err: any) {
+      toast.error(err?.message || "Nu am putut trimite comentariul.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  /* ===================== OTHER LOGIC ===================== */
   const attendancePercentage = event.maxAttendees
     ? (event.attendees / event.maxAttendees) * 100
     : 0;
@@ -79,7 +133,6 @@ export function EventDetails({
       : false;
 
   const handleShare = () => {
-    // Copy current URL to clipboard
     navigator.clipboard.writeText(window.location.href);
     toast.success("Link copiat în clipboard!");
   };
@@ -89,11 +142,7 @@ export function EventDetails({
       {/* Hero Section */}
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 py-4">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate(-1)} // Go back in history
-            className="mb-4"
-          >
+          <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Înapoi
           </Button>
@@ -176,6 +225,7 @@ export function EventDetails({
                 >
                   {event.isAttending ? "Anulează participarea" : "Participă"}
                 </Button>
+
                 <Button
                   variant="outline"
                   size="icon"
@@ -187,6 +237,7 @@ export function EventDetails({
                     <Bookmark className="h-5 w-5" />
                   )}
                 </Button>
+
                 <Button variant="outline" size="icon" onClick={handleShare}>
                   <Share2 className="h-5 w-5" />
                 </Button>
@@ -213,9 +264,9 @@ export function EventDetails({
             <div className="bg-white rounded-lg p-6">
               <h2 className="mb-4">Întrebări și comentarii</h2>
 
-              {event.comments && event.comments.length > 0 ? (
+              {comments.length > 0 ? (
                 <div className="space-y-4 mb-6">
-                  {event.comments.map((comment) => (
+                  {comments.map((comment) => (
                     <div key={comment.id} className="border-b pb-4">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
@@ -252,9 +303,16 @@ export function EventDetails({
                 <Textarea
                   placeholder="Scrie întrebarea sau comentariul tău aici..."
                   rows={3}
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  disabled={isSubmitting}
                 />
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  Trimite comentariu
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700"
+                  onClick={handleSubmitComment}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Se trimite..." : "Trimite comentariu"}
                 </Button>
               </div>
             </div>
@@ -276,7 +334,7 @@ export function EventDetails({
                   <Button
                     variant="link"
                     className="p-0 h-auto text-sm text-blue-600"
-                    onClick={() => navigate(`/profile`)} // Just link to generic profile for now
+                    onClick={() => navigate(`/profile`)}
                   >
                     Vezi profil
                   </Button>
