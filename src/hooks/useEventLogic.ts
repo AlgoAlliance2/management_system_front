@@ -1,16 +1,20 @@
-import { useState, useMemo } from 'react';
-import { toast } from 'sonner';
-import { isToday, isThisWeek, isFuture } from 'date-fns';
-import { mockEvents } from '../data/mockData';
-import type { Event, EventCategory } from '../types';
+import { useState, useMemo } from "react";
+import { toast } from "sonner";
+import { isToday, isThisWeek, isFuture } from "date-fns";
+import { mockEvents } from "../data/mockData";
+import type { Event, EventCategory } from "../types";
 
 export function useEventLogic(searchQuery: string) {
   // Data State
   const [events, setEvents] = useState<Event[]>(mockEvents);
-  
+
   // Filter State
-  const [selectedCategory, setSelectedCategory] = useState<EventCategory | "all">("all");
-  const [selectedTimeframe, setSelectedTimeframe] = useState<"all" | "upcoming" | "today" | "this-week">("all");
+  const [selectedCategory, setSelectedCategory] = useState<EventCategory | "all">(
+    "all"
+  );
+  const [selectedTimeframe, setSelectedTimeframe] = useState<
+    "all" | "upcoming" | "today" | "this-week"
+  >("all");
   const [showSavedOnly, setShowSavedOnly] = useState(false);
   const [showAttendingOnly, setShowAttendingOnly] = useState(false);
 
@@ -29,24 +33,82 @@ export function useEventLogic(searchQuery: string) {
     }
   };
 
-  const handleToggleAttend = (eventId: string) => {
+  const handleToggleAttend = async (eventId: string) => {
+    const current = events.find((e) => e.id === eventId);
+    if (!current) return;
+
+    const nextIsAttending = !current.isAttending;
+
+    // Optimistic UI update
     setEvents((prevEvents) =>
       prevEvents.map((event) => {
-        if (event.id === eventId) {
-          const isAttending = !event.isAttending;
-          const attendees = isAttending
-            ? event.attendees + 1
-            : event.attendees - 1;
-          return { ...event, isAttending, attendees };
-        }
-        return event;
+        if (event.id !== eventId) return event;
+
+        const attendees = nextIsAttending
+          ? event.attendees + 1
+          : Math.max(0, event.attendees - 1);
+
+        return {
+          ...event,
+          isAttending: nextIsAttending,
+          attendees,
+        };
       })
     );
-    const event = events.find((e) => e.id === eventId);
-    if (event?.isAttending) {
-      toast.success("Participare anulată");
-    } else {
-      toast.success("Te-ai înscris cu succes!");
+
+    try {
+      const res = await fetch(`/api/events/${eventId}/attend`, {
+        method: nextIsAttending ? "POST" : "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+         // check auth
+        },
+      });
+
+      if (!res.ok) {
+        const msg = await res.text().catch(() => "");
+        throw new Error(msg || "Eroare la actualizarea participării.");
+      }
+
+      try {
+        const data = await res.json();
+        if (typeof data?.attendees === "number" || typeof data?.isAttending === "boolean") {
+          setEvents((prevEvents) =>
+            prevEvents.map((event) => {
+              if (event.id !== eventId) return event;
+              return {
+                ...event,
+                attendees:
+                  typeof data.attendees === "number" ? data.attendees : event.attendees,
+                isAttending:
+                  typeof data.isAttending === "boolean" ? data.isAttending : event.isAttending,
+              };
+            })
+          );
+        }
+      } catch {
+        
+      }
+
+      if (nextIsAttending) {
+        toast.success("Te-ai înscris cu succes!");
+      } else {
+        toast.success("Participare anulată");
+      }
+    } catch (err: any) {
+      // Rollback 
+      setEvents((prevEvents) =>
+        prevEvents.map((event) => {
+          if (event.id !== eventId) return event;
+          return {
+            ...event,
+            isAttending: current.isAttending,
+            attendees: current.attendees,
+          };
+        })
+      );
+
+      toast.error(err?.message || "Nu am putut actualiza participarea.");
     }
   };
 
