@@ -1,43 +1,78 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { isToday, isThisWeek, isFuture } from 'date-fns';
-import { mockEvents } from '../data/mockData';
+// import { mockEvents } from '../data/mockData'; // Just in case :)
 import type { Event, EventCategory } from '../types';
 import api from '../lib/api';
 
 export function useEventLogic(searchQuery: string) {
-  // Data State
-  const [events, setEvents] = useState<Event[]>(mockEvents);
+
+  const [events, setEvents] = useState<Event[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  // Filter State
+  
   const [selectedCategory, setSelectedCategory] = useState<EventCategory | "all">("all");
   const [selectedTimeframe, setSelectedTimeframe] = useState<"all" | "upcoming" | "today" | "this-week">("all");
   const [showSavedOnly, setShowSavedOnly] = useState(false);
   const [showAttendingOnly, setShowAttendingOnly] = useState(false);
 
-  // Event Handlers
-  const handleToggleSave = async (eventId: string) => {
+ 
+  const fetchEvents = useCallback(async (isBackgroundUpdate = false) => {
     try {
-      // Optimistic update
-      setEvents((prevEvents) =>
-        prevEvents.map((event) =>
-          event.id === eventId ? { ...event, isSaved: !event.isSaved } : event
-        )
-      );
+      if (!isBackgroundUpdate) setIsLoading(true);
+      
+      
+      const response = await api.get('/events'); 
+      setEvents(response.data);
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching events:", err);
+      
+      if (events.length === 0) {
+        setError("Nu s-au putut încărca evenimentele.");
+      }
+    } finally {
+      if (!isBackgroundUpdate) setIsLoading(false);
+    }
+  }, []);
 
-      const event = events.find((e) => e.id === eventId);
-      const isNowSaved = !event?.isSaved;
+  useEffect(() => {
+    
+    fetchEvents();
 
-      // Send request to backend
-      if (isNowSaved) {
-        await api.post(`/events/${eventId}/save`);
+    // Poll every 5 seconds to check for new events
+    const intervalId = setInterval(() => {
+      fetchEvents(true);
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, [fetchEvents]);
+
+  
+  
+  const handleToggleSave = async (eventId: string) => {
+    
+    setEvents((prevEvents) =>
+      prevEvents.map((event) =>
+        event.id === eventId ? { ...event, isSaved: !event.isSaved } : event
+      )
+    );
+
+    try {
+      
+      await api.post(`/events/${eventId}/save`);
+      
+      
+      const updatedEvent = events.find(e => e.id === eventId);
+      
+      if (!updatedEvent?.isSaved) {
         toast.success("Eveniment salvat");
       } else {
-        await api.delete(`/events/${eventId}/save`);
         toast.success("Eveniment eliminat din salvate");
       }
     } catch (error) {
-      // Revert optimistic update on error
+      
       setEvents((prevEvents) =>
         prevEvents.map((event) =>
           event.id === eventId ? { ...event, isSaved: !event.isSaved } : event
@@ -47,7 +82,8 @@ export function useEventLogic(searchQuery: string) {
     }
   };
 
-  const handleToggleAttend = (eventId: string) => {
+  const handleToggleAttend = async (eventId: string) => {
+    
     setEvents((prevEvents) =>
       prevEvents.map((event) => {
         if (event.id === eventId) {
@@ -60,11 +96,31 @@ export function useEventLogic(searchQuery: string) {
         return event;
       })
     );
-    const event = events.find((e) => e.id === eventId);
-    if (event?.isAttending) {
-      toast.success("Participare anulată");
-    } else {
-      toast.success("Te-ai înscris cu succes!");
+
+    try {
+      
+      const response = await api.post(`/events/${eventId}/attend`);
+      
+      if (response.data.isAttending) {
+        toast.success("Te-ai înscris cu succes!");
+      } else {
+        toast.success("Participare anulată");
+      }
+    } catch (error) {
+       
+       setEvents((prevEvents) =>
+        prevEvents.map((event) => {
+          if (event.id === eventId) {
+            const isAttending = !event.isAttending; 
+            const attendees = isAttending
+              ? event.attendees + 1
+              : event.attendees - 1;
+            return { ...event, isAttending, attendees };
+          }
+          return event;
+        })
+      );
+      toast.error("Nu s-a putut actualiza participarea");
     }
   };
 
@@ -91,17 +147,17 @@ export function useEventLogic(searchQuery: string) {
     searchQuery,
   ]);
 
-  // Filter Logic
   const filteredEvents = useMemo(() => {
     return events.filter((event) => {
-      // Search filter
+      
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
+        
         const matchesSearch =
-          event.title.toLowerCase().includes(query) ||
-          event.description.toLowerCase().includes(query) ||
-          event.location.toLowerCase().includes(query) ||
-          event.organizer.toLowerCase().includes(query);
+          event.title?.toLowerCase().includes(query) ||
+          event.description?.toLowerCase().includes(query) ||
+          event.location?.toLowerCase().includes(query) ||
+          event.organizer?.toLowerCase().includes(query);
         if (!matchesSearch) return false;
       }
 
@@ -139,8 +195,10 @@ export function useEventLogic(searchQuery: string) {
 
   return {
     events,
-    setEvents,
+    setEvents, 
     filteredEvents,
+    isLoading, 
+    error,
     selectedCategory,
     setSelectedCategory,
     selectedTimeframe,
@@ -153,5 +211,6 @@ export function useEventLogic(searchQuery: string) {
     handleToggleAttend,
     handleClearFilters,
     hasActiveFilters,
+    refetch: () => fetchEvents(false) // Helper to manually refresh
   };
 }

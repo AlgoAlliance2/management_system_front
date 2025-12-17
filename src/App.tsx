@@ -15,23 +15,25 @@ import { mockNotifications } from "./data/mockData";
 import { toast } from "sonner";
 import api, { auth } from "./lib/api";
 import type { User, Notification } from "./types";
-import { mockUser } from "./data/mockData";
+// import { mockUser } from "./data/mockData"; // REMOVED
 
 export default function App() {
-  // Auth State
-  const [currentUser, setCurrentUser] = useState<User | null>(mockUser);
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
-  const [isAuthLoading, setIsAuthLoading] = useState(true); // New loading state
+  // Auth State - Start with null to force login check
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   // UI State
   const [searchQuery, setSearchQuery] = useState("");
   const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
   const [showNotifications, setShowNotifications] = useState(false);
 
-  // Use the custom hook
   const {
     events,
     filteredEvents,
+    isLoading: isEventsLoading, 
+    error: eventsError,
+    refetch, // Get refetch function
     selectedCategory,
     setSelectedCategory,
     selectedTimeframe,
@@ -75,14 +77,14 @@ export default function App() {
     initAuth();
   }, []);
 
-  // Auth Handlers (Now accept User object)
+  // Auth Handlers
   const handleLoginSuccess = (user: User) => {
     setCurrentUser(user);
     setIsAuthenticated(true);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("authToken"); // Clear token
+    localStorage.removeItem("authToken");
     setCurrentUser(null);
     setIsAuthenticated(false);
     toast.success("Deconectare reușită!");
@@ -113,22 +115,20 @@ export default function App() {
     setShowNotifications(false);
   };
 
-  const handleCreateEventSubmit = (eventData: any) => {
-    // In real app, call API here: await api.post('/events', eventData)
-    const newEvent: any = {
-      id: Date.now().toString(),
-      ...eventData,
-      organizer: currentUser?.name || "Organizator",
-      organizerId: currentUser?.id,
-      attendees: 0,
-      isAttending: false,
-      isSaved: false,
-      comments: [],
-    };
-    
-    // Add to local state (provided by useEventLogic - you might need to expose setEvents there)
-    // setEvents([newEvent, ...events]); 
-    console.log("New Event Created:", newEvent);
+  const handleCreateEventSubmit = async (eventData: any) => {
+    try {
+      // Send real API request
+      await api.post('/events', eventData);
+      
+      toast.success("Eveniment creat cu succes!");
+      
+      // Refresh the event list immediately
+      refetch(); 
+
+    } catch (error) {
+      console.error("Failed to create event:", error);
+      toast.error("Nu s-a putut crea evenimentul.");
+    }
   };
 
   // 2. Show loading spinner while checking token
@@ -147,6 +147,19 @@ export default function App() {
         <AuthForm onLogin={handleLoginSuccess} onRegister={handleLoginSuccess} />
         <Toaster position="bottom-right" />
       </>
+    );
+  }
+
+  // 4. Handle API Error State (Optional: could also be an alert inside the layout)
+  if (eventsError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-red-50">
+        <div className="text-center">
+           <h2 className="text-xl font-bold text-red-600">Eroare</h2>
+           <p className="text-red-500">{eventsError}</p>
+           <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-red-600 text-white rounded">Reîncearcă</button>
+        </div>
+      </div>
     );
   }
 
@@ -179,11 +192,13 @@ export default function App() {
                   onToggleSavedOnly={() => setShowSavedOnly(!showSavedOnly)}
                   showAttendingOnly={showAttendingOnly}
                   onToggleAttendingOnly={() => setShowAttendingOnly(!showAttendingOnly)}
-                  isLoading={false}
+                  // PASS THE LOADING STATE HERE
+                  isLoading={isEventsLoading}
                   onClearFilters={handleClearFilters}
                 />
               }
             />
+            {/* Pass isLoading to other views if they support it, otherwise they just receive empty events initially */}
             <Route path="/calendar" element={<CalendarView events={events} onToggleSave={handleToggleSave} />} />
             <Route path="/profile" element={<UserProfile user={currentUser} attendingEvents={attendingEvents} onToggleSave={handleToggleSave} organizedEvents={organizedEvents} savedEvents={savedEvents} />} />
             <Route path="/organizer" element={<OrganizerPanel events={events} user={currentUser} />} />
