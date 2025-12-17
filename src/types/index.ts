@@ -6,6 +6,17 @@ export type EventCategory =
   | 'sports'
   | 'cultural';
 
+export interface CreateEventInput {
+  title: string;
+  category: EventCategory;
+  description: string;
+  date: string;
+  time: string;
+  location: string;
+  maxAttendees: string; // Keeps input value as string
+  imageUrl: string;
+}
+
 export interface Event {
   id: string;
   title: string;

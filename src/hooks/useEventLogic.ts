@@ -1,8 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { isToday, isThisWeek, isFuture } from "date-fns";
-import { mockEvents } from "../data/mockData";
 import type { Event, EventCategory } from "../types";
+import api from "../lib/api";
+
 export function useEventLogic(searchQuery: string) {
 
   const [events, setEvents] = useState<Event[]>([]);

@@ -12,11 +12,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import type { EventCategory } from "../types";
+import type { EventCategory, CreateEventInput } from "../types";
 import { toast } from "sonner";
 
 interface CreateEventFormProps {
-  onSubmit: (eventData: any) => void;
+  onSubmit: (eventData: CreateEventInput) => void;
 }
 
 const categories: { value: EventCategory; label: string }[] = [
@@ -91,7 +91,7 @@ export function CreateEventForm({ onSubmit }: CreateEventFormProps) {
 
   const handleSubmit = () => {
     if (validateStep(step)) {
-      onSubmit(formData);
+      onSubmit(formData as CreateEventInput);
       toast.success("Eveniment creat cu succes!");
       navigate('/organizer'); // 3. Redirect back to organizer panel after success
     }
