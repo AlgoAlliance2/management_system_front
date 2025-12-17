@@ -3,33 +3,81 @@ import { toast } from "sonner";
 import { isToday, isThisWeek, isFuture } from "date-fns";
 import { mockEvents } from "../data/mockData";
 import type { Event, EventCategory } from "../types";
-
 export function useEventLogic(searchQuery: string) {
-  // Data State
-  const [events, setEvents] = useState<Event[]>(mockEvents);
 
-  // Filter State
-  const [selectedCategory, setSelectedCategory] = useState<EventCategory | "all">(
-    "all"
-  );
-  const [selectedTimeframe, setSelectedTimeframe] = useState<
-    "all" | "upcoming" | "today" | "this-week"
-  >("all");
+  const [events, setEvents] = useState<Event[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  
+  const [selectedCategory, setSelectedCategory] = useState<EventCategory | "all">("all");
+  const [selectedTimeframe, setSelectedTimeframe] = useState<"all" | "upcoming" | "today" | "this-week">("all");
+
   const [showSavedOnly, setShowSavedOnly] = useState(false);
   const [showAttendingOnly, setShowAttendingOnly] = useState(false);
 
-  // Event Handlers
-  const handleToggleSave = (eventId: string) => {
+ 
+  const fetchEvents = useCallback(async (isBackgroundUpdate = false) => {
+    try {
+      if (!isBackgroundUpdate) setIsLoading(true);
+      
+      
+      const response = await api.get('/events'); 
+      setEvents(response.data);
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching events:", err);
+      
+      if (events.length === 0) {
+        setError("Nu s-au putut încărca evenimentele.");
+      }
+    } finally {
+      if (!isBackgroundUpdate) setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    
+    fetchEvents();
+
+    // Poll every 5 seconds to check for new events
+    const intervalId = setInterval(() => {
+      fetchEvents(true);
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, [fetchEvents]);
+
+  
+  
+  const handleToggleSave = async (eventId: string) => {
+    
     setEvents((prevEvents) =>
       prevEvents.map((event) =>
         event.id === eventId ? { ...event, isSaved: !event.isSaved } : event
       )
     );
-    const event = events.find((e) => e.id === eventId);
-    if (event?.isSaved) {
-      toast.success("Eveniment eliminat din salvate");
-    } else {
-      toast.success("Eveniment salvat");
+
+    try {
+      
+      await api.post(`/events/${eventId}/save`);
+      
+      
+      const updatedEvent = events.find(e => e.id === eventId);
+      
+      if (!updatedEvent?.isSaved) {
+        toast.success("Eveniment salvat");
+      } else {
+        toast.success("Eveniment eliminat din salvate");
+      }
+    } catch (error) {
+      
+      setEvents((prevEvents) =>
+        prevEvents.map((event) =>
+          event.id === eventId ? { ...event, isSaved: !event.isSaved } : event
+        )
+      );
+      toast.error("Nu s-a putut actualiza starea evenimentului");
     }
   };
 
@@ -39,7 +87,6 @@ export function useEventLogic(searchQuery: string) {
 
     const nextIsAttending = !current.isAttending;
 
-    // Optimistic UI update
     setEvents((prevEvents) =>
       prevEvents.map((event) => {
         if (event.id !== eventId) return event;
@@ -135,17 +182,17 @@ export function useEventLogic(searchQuery: string) {
     searchQuery,
   ]);
 
-  // Filter Logic
   const filteredEvents = useMemo(() => {
     return events.filter((event) => {
-      // Search filter
+      
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
+        
         const matchesSearch =
-          event.title.toLowerCase().includes(query) ||
-          event.description.toLowerCase().includes(query) ||
-          event.location.toLowerCase().includes(query) ||
-          event.organizer.toLowerCase().includes(query);
+          event.title?.toLowerCase().includes(query) ||
+          event.description?.toLowerCase().includes(query) ||
+          event.location?.toLowerCase().includes(query) ||
+          event.organizer?.toLowerCase().includes(query);
         if (!matchesSearch) return false;
       }
 
@@ -183,8 +230,10 @@ export function useEventLogic(searchQuery: string) {
 
   return {
     events,
-    setEvents,
+    setEvents, 
     filteredEvents,
+    isLoading, 
+    error,
     selectedCategory,
     setSelectedCategory,
     selectedTimeframe,
@@ -197,5 +246,6 @@ export function useEventLogic(searchQuery: string) {
     handleToggleAttend,
     handleClearFilters,
     hasActiveFilters,
+    refetch: () => fetchEvents(false) // Helper to manually refresh
   };
 }
