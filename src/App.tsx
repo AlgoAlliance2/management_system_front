@@ -13,7 +13,7 @@ import { Toaster } from "./components/ui/sonner";
 import { useEventLogic } from "./hooks/useEventLogic";
 import { mockNotifications } from "./data/mockData";
 import { toast } from "sonner";
-import { auth } from "./lib/api";
+import api, { auth } from "./lib/api";
 import type { User, Notification } from "./types";
 import { mockUser } from "./data/mockData";
 
@@ -88,15 +88,25 @@ export default function App() {
     toast.success("Deconectare reușită!");
   };
 
-  const handleMarkAsRead = (notificationId: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
-    );
+  const handleMarkAsRead = async (notificationId: string) => {
+    try {
+      await api.patch(`/notifications/${notificationId}/read`);
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
+      );
+    } catch (error) {
+      toast.error("Eroare la actualizarea notificării");
+    }
   };
 
-  const handleMarkAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    toast.success("Toate notificările au fost marcate ca citite");
+  const handleMarkAllAsRead = async () => {
+    try {
+      await api.patch('/notifications/read-all');
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      toast.success("Toate notificările au fost marcate ca citite");
+    } catch (error) {
+      toast.error("Eroare la actualizarea notificărilor");
+    }
   };
 
   const handleNotificationClick = () => {
