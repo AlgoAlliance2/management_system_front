@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { isToday, isThisWeek, isFuture } from 'date-fns';
 import { mockEvents } from '../data/mockData';
 import type { Event, EventCategory } from '../types';
+import api from '../lib/api';
 
 export function useEventLogic(searchQuery: string) {
   // Data State
@@ -15,17 +16,34 @@ export function useEventLogic(searchQuery: string) {
   const [showAttendingOnly, setShowAttendingOnly] = useState(false);
 
   // Event Handlers
-  const handleToggleSave = (eventId: string) => {
-    setEvents((prevEvents) =>
-      prevEvents.map((event) =>
-        event.id === eventId ? { ...event, isSaved: !event.isSaved } : event
-      )
-    );
-    const event = events.find((e) => e.id === eventId);
-    if (event?.isSaved) {
-      toast.success("Eveniment eliminat din salvate");
-    } else {
-      toast.success("Eveniment salvat");
+  const handleToggleSave = async (eventId: string) => {
+    try {
+      // Optimistic update
+      setEvents((prevEvents) =>
+        prevEvents.map((event) =>
+          event.id === eventId ? { ...event, isSaved: !event.isSaved } : event
+        )
+      );
+
+      const event = events.find((e) => e.id === eventId);
+      const isNowSaved = !event?.isSaved;
+
+      // Send request to backend
+      if (isNowSaved) {
+        await api.post(`/events/${eventId}/save`);
+        toast.success("Eveniment salvat");
+      } else {
+        await api.delete(`/events/${eventId}/save`);
+        toast.success("Eveniment eliminat din salvate");
+      }
+    } catch (error) {
+      // Revert optimistic update on error
+      setEvents((prevEvents) =>
+        prevEvents.map((event) =>
+          event.id === eventId ? { ...event, isSaved: !event.isSaved } : event
+        )
+      );
+      toast.error("Nu s-a putut actualiza starea evenimentului");
     }
   };
 
