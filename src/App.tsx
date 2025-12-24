@@ -15,6 +15,7 @@ import { mockNotifications } from "./data/mockData";
 import { toast } from "sonner";
 import api, { auth } from "./lib/api";
 import type { User, Notification } from "./types";
+import { EditEventForm } from "./components/EditEventForm";
 // import { mockUser } from "./data/mockData"; // REMOVED
 
 export default function App() {
@@ -25,13 +26,14 @@ export default function App() {
 
   // UI State
   const [searchQuery, setSearchQuery] = useState("");
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+  const [notifications, setNotifications] =
+    useState<Notification[]>(mockNotifications);
   const [showNotifications, setShowNotifications] = useState(false);
 
   const {
     events,
     filteredEvents,
-    isLoading: isEventsLoading, 
+    isLoading: isEventsLoading,
     error: eventsError,
     refetch, // Get refetch function
     selectedCategory,
@@ -50,7 +52,9 @@ export default function App() {
 
   const attendingEvents = events.filter((e) => e.isAttending);
   const savedEvents = events.filter((e) => e.isSaved);
-  const organizedEvents = events.filter((e) => e.organizerId === currentUser?.id);
+  const organizedEvents = events.filter(
+    (e) => e.organizerId === currentUser?.id
+  );
 
   // 1. Check for existing session on Mount
   useEffect(() => {
@@ -103,7 +107,7 @@ export default function App() {
 
   const handleMarkAllAsRead = async () => {
     try {
-      await api.patch('/notifications/read-all');
+      await api.patch("/notifications/read-all");
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       toast.success("Toate notificările au fost marcate ca citite");
     } catch (error) {
@@ -118,13 +122,12 @@ export default function App() {
   const handleCreateEventSubmit = async (eventData: any) => {
     try {
       // Send real API request
-      await api.post('/events', eventData);
-      
-      toast.success("Eveniment creat cu succes!");
-      
-      // Refresh the event list immediately
-      refetch(); 
+      await api.post("/events", eventData);
 
+      toast.success("Eveniment creat cu succes!");
+
+      // Refresh the event list immediately
+      refetch();
     } catch (error) {
       console.error("Failed to create event:", error);
       toast.error("Nu s-a putut crea evenimentul.");
@@ -144,7 +147,10 @@ export default function App() {
   if (!isAuthenticated || !currentUser) {
     return (
       <>
-        <AuthForm onLogin={handleLoginSuccess} onRegister={handleLoginSuccess} />
+        <AuthForm
+          onLogin={handleLoginSuccess}
+          onRegister={handleLoginSuccess}
+        />
         <Toaster position="bottom-right" />
       </>
     );
@@ -155,9 +161,14 @@ export default function App() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-red-50">
         <div className="text-center">
-           <h2 className="text-xl font-bold text-red-600">Eroare</h2>
-           <p className="text-red-500">{eventsError}</p>
-           <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-red-600 text-white rounded">Reîncearcă</button>
+          <h2 className="text-xl font-bold text-red-600">Eroare</h2>
+          <p className="text-red-500">{eventsError}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded"
+          >
+            Reîncearcă
+          </button>
         </div>
       </div>
     );
@@ -191,7 +202,9 @@ export default function App() {
                   showSavedOnly={showSavedOnly}
                   onToggleSavedOnly={() => setShowSavedOnly(!showSavedOnly)}
                   showAttendingOnly={showAttendingOnly}
-                  onToggleAttendingOnly={() => setShowAttendingOnly(!showAttendingOnly)}
+                  onToggleAttendingOnly={() =>
+                    setShowAttendingOnly(!showAttendingOnly)
+                  }
                   // PASS THE LOADING STATE HERE
                   isLoading={isEventsLoading}
                   onClearFilters={handleClearFilters}
@@ -199,11 +212,43 @@ export default function App() {
               }
             />
             {/* Pass isLoading to other views if they support it, otherwise they just receive empty events initially */}
-            <Route path="/calendar" element={<CalendarView events={events} onToggleSave={handleToggleSave} />} />
-            <Route path="/profile" element={<UserProfile user={currentUser} attendingEvents={attendingEvents} onToggleSave={handleToggleSave} organizedEvents={organizedEvents} savedEvents={savedEvents} />} />
-            <Route path="/organizer" element={<OrganizerPanel events={events} user={currentUser} />} />
-            <Route path="/event/:id" element={<EventDetails events={events} onToggleAttend={handleToggleAttend} onToggleSave={handleToggleSave} />} />
-            <Route path="/create-event" element={<CreateEventForm onSubmit={handleCreateEventSubmit} />} />
+            <Route
+              path="/calendar"
+              element={
+                <CalendarView events={events} onToggleSave={handleToggleSave} />
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <UserProfile
+                  user={currentUser}
+                  attendingEvents={attendingEvents}
+                  onToggleSave={handleToggleSave}
+                  organizedEvents={organizedEvents}
+                  savedEvents={savedEvents}
+                />
+              }
+            />
+            <Route
+              path="/organizer"
+              element={<OrganizerPanel events={events} user={currentUser} />}
+            />
+            <Route
+              path="/event/:id"
+              element={
+                <EventDetails
+                  events={events}
+                  onToggleAttend={handleToggleAttend}
+                  onToggleSave={handleToggleSave}
+                />
+              }
+            />
+            <Route
+              path="/create-event"
+              element={<CreateEventForm onSubmit={handleCreateEventSubmit} />}
+            />
+            <Route path="/event/:id/edit" element={<EditEventForm />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
@@ -217,7 +262,7 @@ export default function App() {
             onMarkAllAsRead={handleMarkAllAsRead}
           />
         )}
-        
+
         <Toaster position="bottom-right" />
       </div>
     </BrowserRouter>

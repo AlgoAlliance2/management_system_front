@@ -1,8 +1,8 @@
-import { Bell, Search, User, Plus, Menu } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom'; // 1. Import Router hooks
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Badge } from './ui/badge';
+import { Bell, Search, User, Plus, Menu } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom"; // 1. Import Router hooks
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Badge } from "./ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,13 +10,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from './ui/dropdown-menu';
+} from "./ui/dropdown-menu";
 import {
   Sheet,
   SheetContent,
   SheetTrigger,
-  SheetClose // Import SheetClose to close menu on click
-} from './ui/sheet';
+  SheetClose, // Import SheetClose to close menu on click
+} from "./ui/sheet";
 
 interface HeaderProps {
   currentUser: { name: string; email: string; role: string } | null;
@@ -39,13 +39,13 @@ export function Header({
 
   // 3. Update menu items to use URL paths instead of 'page' strings
   const menuItems = [
-    { label: 'Acasă', path: '/' },
-    { label: 'Calendar', path: '/calendar' },
-    { label: 'Evenimentele Mele', path: '/profile' },
+    { label: "Acasă", path: "/" },
+    { label: "Calendar", path: "/calendar" },
+    { label: "Evenimentele Mele", path: "/profile" },
   ];
 
-  if (currentUser?.role === 'organizer' || currentUser?.role === 'admin') {
-    menuItems.push({ label: 'Panou Organizator', path: '/organizer' });
+  if (currentUser?.role === "organizer" || currentUser?.role === "admin") {
+    menuItems.push({ label: "Panou Organizator", path: "/organizer" });
   }
 
   return (
@@ -69,7 +69,9 @@ export function Header({
               </div>
               <div className="hidden md:block">
                 <h1 className="font-bold">UniPlans</h1>
-                <p className="text-xs text-gray-500">Universitatea din Suceava</p>
+                <p className="text-xs text-gray-500">
+                  Universitatea din Suceava
+                </p>
               </div>
             </Link>
           </div>
@@ -96,9 +98,7 @@ export function Header({
                 variant="ghost"
                 asChild // This allows the Button to act as a Link
               >
-                <Link to={item.path}>
-                  {item.label}
-                </Link>
+                <Link to={item.path}>{item.label}</Link>
               </Button>
             ))}
           </nav>
@@ -108,7 +108,8 @@ export function Header({
             {currentUser && (
               <>
                 {/* Create Event Button (Desktop) */}
-                {(currentUser.role === 'organizer' || currentUser.role === 'admin') && (
+                {(currentUser.role === "organizer" ||
+                  currentUser.role === "admin") && (
                   <Button
                     asChild
                     className="hidden md:flex bg-blue-600 hover:bg-blue-700"
@@ -145,14 +146,18 @@ export function Header({
                   <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuLabel>
                       <div>{currentUser.name}</div>
-                      <div className="text-xs text-gray-500">{currentUser.email}</div>
+                      <div className="text-xs text-gray-500">
+                        {currentUser.email}
+                      </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     {/* Use navigate() for dropdown items to ensure menu behavior implies navigation */}
-                    <DropdownMenuItem onClick={() => navigate('/profile')}>
+                    <DropdownMenuItem onClick={() => navigate("/profile")}>
                       Profilul Meu
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={onLogout}>Deconectare</DropdownMenuItem>
+                    <DropdownMenuItem onClick={onLogout}>
+                      Deconectare
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </>
@@ -180,32 +185,32 @@ export function Header({
                   </div>
 
                   {/* Mobile Create Event Button */}
-                  {currentUser && (currentUser.role === 'organizer' || currentUser.role === 'admin') && (
-                    <SheetClose asChild>
+                  {currentUser &&
+                    (currentUser.role === "organizer" ||
+                      currentUser.role === "admin") && (
+                      <SheetClose asChild>
                         <Button
-                        asChild
-                        className="w-full bg-blue-600 hover:bg-blue-700"
+                          asChild
+                          className="w-full bg-blue-600 hover:bg-blue-700"
                         >
-                        <Link to="/create-event">
+                          <Link to="/create-event">
                             <Plus className="mr-2 h-4 w-4" />
                             Creează Eveniment
-                        </Link>
+                          </Link>
                         </Button>
-                    </SheetClose>
-                  )}
+                      </SheetClose>
+                    )}
 
                   {/* Mobile Navigation */}
                   <nav className="flex flex-col gap-2">
                     {menuItems.map((item) => (
                       <SheetClose asChild key={item.path}>
                         <Button
-                            asChild
-                            variant="ghost"
-                            className="justify-start"
+                          asChild
+                          variant="ghost"
+                          className="justify-start"
                         >
-                            <Link to={item.path}>
-                                {item.label}
-                            </Link>
+                          <Link to={item.path}>{item.label}</Link>
                         </Button>
                       </SheetClose>
                     ))}
