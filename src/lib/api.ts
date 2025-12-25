@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { User } from '../types';
+import type { User, Event as AppEvent } from '../types';
 
 // 1. Create the Axios instance
 const API_URL = import.meta.env.VITE_API_BACKEND_URL_LOCAL;
@@ -11,7 +11,6 @@ const api = axios.create({
   },
 });
 
-// 2. Request Interceptor: Attach Token
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('authToken');
@@ -23,7 +22,6 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// 3. Response Interceptor: Handle 401 (Unauthorized)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -43,7 +41,6 @@ export const auth = {
       email,
       password,
     });
-    // Save token immediately upon success
     localStorage.setItem('authToken', response.data.token);
     return response.data.user;
   },
@@ -58,11 +55,35 @@ export const auth = {
     return response.data.user;
   },
 
-  // Used to get current user data if token exists in localStorage on page reload
   getMe: async () => {
     const response = await api.get<User>('/auth/me');
     return response.data;
   },
+};
+
+
+// Clean Event API methods
+export const eventsApi = {
+  getAll: async () => {
+    const response = await api.get<AppEvent[]>('/events');
+    return response.data;
+  },
+
+  create: async (data: any) => {
+    const response = await api.post<AppEvent>('/events', data);
+    return response.data;
+  },
+
+  // Returns the updated fields so we can update local state accurately
+  toggleAttend: async (id: string) => {
+    const response = await api.post<{ isAttending: boolean; attendees: number }>(`/events/${id}/attend`);
+    return response.data;
+  },
+
+  toggleSave: async (id: string) => {
+    const response = await api.post<{ isSaved: boolean }>(`/events/${id}/save`);
+    return response.data;
+  }
 };
 
 export default api;

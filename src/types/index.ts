@@ -47,7 +47,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'student' | 'professor' | 'organizer' | 'admin';
+  role: 'user' | 'organizer' | 'admin';
   avatar?: string;
 }
 

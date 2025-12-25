@@ -15,8 +15,7 @@ import { mockNotifications } from "./data/mockData";
 import { toast } from "sonner";
 import api, { auth } from "./lib/api";
 import type { User, Notification } from "./types";
-import { EditEventForm } from "./components/EditEventForm";
-// import { mockUser } from "./data/mockData"; // REMOVED
+
 
 export default function App() {
   // Auth State - Start with null to force login check
@@ -48,7 +47,7 @@ export default function App() {
     handleToggleAttend,
     handleClearFilters,
     hasActiveFilters,
-  } = useEventLogic(searchQuery);
+  } = useEventLogic(searchQuery, isAuthenticated);
 
   const attendingEvents = events.filter((e) => e.isAttending);
   const savedEvents = events.filter((e) => e.isSaved);
@@ -239,6 +238,7 @@ export default function App() {
               element={
                 <EventDetails
                   events={events}
+                  currentUser={currentUser}
                   onToggleAttend={handleToggleAttend}
                   onToggleSave={handleToggleSave}
                 />
@@ -248,7 +248,6 @@ export default function App() {
               path="/create-event"
               element={<CreateEventForm onSubmit={handleCreateEventSubmit} />}
             />
-            <Route path="/event/:id/edit" element={<EditEventForm />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
