@@ -43,11 +43,13 @@ export interface Comment {
   date: Date;
 }
 
+export type UserRole = 'student' | 'organizer' | 'admin';
+
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'user' | 'organizer' | 'admin';
+  role: UserRole;
   avatar?: string;
 }
 

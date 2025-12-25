@@ -6,6 +6,7 @@ import { EventDetails } from "./components/EventDetails";
 import { CalendarView } from "./components/CalendarView";
 import { UserProfile } from "./components/UserProfile";
 import { OrganizerPanel } from "./components/OrganizerPanel";
+import { AdminPanel } from "./components/AdminPanel"; 
 import { AuthForm } from "./components/AuthForm";
 import { CreateEventForm } from "./components/CreateEventForm";
 import { NotificationsPanel } from "./components/NotificationsPanel";
@@ -13,28 +14,24 @@ import { Toaster } from "./components/ui/sonner";
 import { useEventLogic } from "./hooks/useEventLogic";
 import { mockNotifications } from "./data/mockData";
 import { toast } from "sonner";
-import api, { auth } from "./lib/api";
-import type { User, Notification } from "./types";
-
+import { auth, eventsApi, notificationsApi } from "./lib/api"; // Updated imports
+import type { User, Notification, CreateEventInput } from "./types";
 
 export default function App() {
-  // Auth State - Start with null to force login check
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
-  // UI State
   const [searchQuery, setSearchQuery] = useState("");
-  const [notifications, setNotifications] =
-    useState<Notification[]>(mockNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
   const [showNotifications, setShowNotifications] = useState(false);
 
   const {
     events,
     filteredEvents,
-    isLoading: isEventsLoading,
     error: eventsError,
-    refetch, // Get refetch function
+    isLoading: isEventsLoading, 
+    refetch, 
     selectedCategory,
     setSelectedCategory,
     selectedTimeframe,
@@ -65,7 +62,6 @@ export default function App() {
       }
 
       try {
-        // Verify token with backend and get user data
         const user = await auth.getMe();
         setCurrentUser(user);
         setIsAuthenticated(true);
@@ -80,7 +76,6 @@ export default function App() {
     initAuth();
   }, []);
 
-  // Auth Handlers
   const handleLoginSuccess = (user: User) => {
     setCurrentUser(user);
     setIsAuthenticated(true);
@@ -95,21 +90,27 @@ export default function App() {
 
   const handleMarkAsRead = async (notificationId: string) => {
     try {
-      await api.patch(`/notifications/${notificationId}/read`);
+      // Use centralized API
+      await notificationsApi.markRead(notificationId);
+      
       setNotifications((prev) =>
         prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
       );
     } catch (error) {
+      console.error(error);
       toast.error("Eroare la actualizarea notificării");
     }
   };
 
   const handleMarkAllAsRead = async () => {
     try {
-      await api.patch("/notifications/read-all");
+      // Use centralized API
+      await notificationsApi.markAllRead();
+      
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       toast.success("Toate notificările au fost marcate ca citite");
     } catch (error) {
+      console.error(error);
       toast.error("Eroare la actualizarea notificărilor");
     }
   };
@@ -118,14 +119,12 @@ export default function App() {
     setShowNotifications(false);
   };
 
-  const handleCreateEventSubmit = async (eventData: any) => {
+  const handleCreateEventSubmit = async (eventData: CreateEventInput) => {
     try {
-      // Send real API request
-      await api.post("/events", eventData);
-
+      // Use centralized API
+      await eventsApi.create(eventData);
+      
       toast.success("Eveniment creat cu succes!");
-
-      // Refresh the event list immediately
       refetch();
     } catch (error) {
       console.error("Failed to create event:", error);
@@ -133,7 +132,6 @@ export default function App() {
     }
   };
 
-  // 2. Show loading spinner while checking token
   if (isAuthLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -142,7 +140,6 @@ export default function App() {
     );
   }
 
-  // 3. Show Auth Form if not authenticated
   if (!isAuthenticated || !currentUser) {
     return (
       <>
@@ -155,7 +152,6 @@ export default function App() {
     );
   }
 
-  // 4. Handle API Error State (Optional: could also be an alert inside the layout)
   if (eventsError) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-red-50">
@@ -201,53 +197,42 @@ export default function App() {
                   showSavedOnly={showSavedOnly}
                   onToggleSavedOnly={() => setShowSavedOnly(!showSavedOnly)}
                   showAttendingOnly={showAttendingOnly}
-                  onToggleAttendingOnly={() =>
-                    setShowAttendingOnly(!showAttendingOnly)
-                  }
-                  // PASS THE LOADING STATE HERE
+                  onToggleAttendingOnly={() => setShowAttendingOnly(!showAttendingOnly)}
                   isLoading={isEventsLoading}
                   onClearFilters={handleClearFilters}
                 />
               }
             />
-            {/* Pass isLoading to other views if they support it, otherwise they just receive empty events initially */}
-            <Route
-              path="/calendar"
-              element={
-                <CalendarView events={events} onToggleSave={handleToggleSave} />
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <UserProfile
-                  user={currentUser}
-                  attendingEvents={attendingEvents}
-                  onToggleSave={handleToggleSave}
-                  organizedEvents={organizedEvents}
-                  savedEvents={savedEvents}
+            <Route path="/calendar" element={<CalendarView events={events} onToggleSave={handleToggleSave} />} />
+            <Route path="/profile" element={
+              <UserProfile user={currentUser} 
+                attendingEvents={attendingEvents} 
+                onToggleSave={handleToggleSave} 
+                organizedEvents={organizedEvents} 
+                savedEvents={savedEvents} 
                 />
-              }
+              } 
             />
-            <Route
-              path="/organizer"
-              element={<OrganizerPanel events={events} user={currentUser} />}
-            />
-            <Route
-              path="/event/:id"
-              element={
-                <EventDetails
-                  events={events}
-                  currentUser={currentUser}
-                  onToggleAttend={handleToggleAttend}
-                  onToggleSave={handleToggleSave}
+            
+            {/* Organizer Route */}
+            <Route path="/organizer" element={<OrganizerPanel events={events} user={currentUser} />} />
+            
+            {/* Admin Route - Only accessible if user role is admin */}
+            {currentUser.role === 'admin' && (
+                <Route path="/admin" element={<AdminPanel events={events} user={currentUser} />} />
+            )}
+
+            <Route path="/event/:id" element={
+              <EventDetails 
+                events={events} 
+                currentUser={currentUser} 
+                onEventUpdated={refetch} 
+                onToggleAttend={handleToggleAttend} 
+                onToggleSave={handleToggleSave} 
                 />
-              }
+              } 
             />
-            <Route
-              path="/create-event"
-              element={<CreateEventForm onSubmit={handleCreateEventSubmit} />}
-            />
+            <Route path="/create-event" element={<CreateEventForm onSubmit={handleCreateEventSubmit} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
@@ -261,7 +246,7 @@ export default function App() {
             onMarkAllAsRead={handleMarkAllAsRead}
           />
         )}
-
+        
         <Toaster position="bottom-right" />
       </div>
     </BrowserRouter>

@@ -1,5 +1,5 @@
 import { Bell, Search, User, Plus, Menu } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom"; // 1. Import Router hooks
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
@@ -15,7 +15,7 @@ import {
   Sheet,
   SheetContent,
   SheetTrigger,
-  SheetClose, // Import SheetClose to close menu on click
+  SheetClose,
 } from "./ui/sheet";
 
 interface HeaderProps {
@@ -35,17 +35,22 @@ export function Header({
   searchQuery,
   onSearchChange,
 }: HeaderProps) {
-  const navigate = useNavigate(); // 2. Initialize hook
+  const navigate = useNavigate();
 
-  // 3. Update menu items to use URL paths instead of 'page' strings
   const menuItems = [
     { label: "Acasă", path: "/" },
     { label: "Calendar", path: "/calendar" },
     { label: "Evenimentele Mele", path: "/profile" },
   ];
 
+  // Organizer Panel (for Organizers & Admins)
   if (currentUser?.role === "organizer" || currentUser?.role === "admin") {
     menuItems.push({ label: "Panou Organizator", path: "/organizer" });
+  }
+
+  // Admin Panel (Strictly for Admins)
+  if (currentUser?.role === "admin") {
+    menuItems.push({ label: "Panou Admin", path: "/admin" });
   }
 
   return (
@@ -96,7 +101,7 @@ export function Header({
               <Button
                 key={item.path}
                 variant="ghost"
-                asChild // This allows the Button to act as a Link
+                asChild
               >
                 <Link to={item.path}>{item.label}</Link>
               </Button>
@@ -151,10 +156,10 @@ export function Header({
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    {/* Use navigate() for dropdown items to ensure menu behavior implies navigation */}
                     <DropdownMenuItem onClick={() => navigate("/profile")}>
                       Profilul Meu
                     </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={onLogout}>
                       Deconectare
                     </DropdownMenuItem>

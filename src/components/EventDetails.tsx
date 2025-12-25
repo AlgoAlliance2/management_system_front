@@ -25,8 +25,8 @@ import { format } from "date-fns";
 import { ro } from "date-fns/locale";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { toast } from "sonner";
-import api from "../lib/api";
-import { ConfirmModal } from "./ConfirmModal"; // 1. Import Modal
+import { eventsApi } from "../lib/api"; // Updated import to use named export
+import { ConfirmModal } from "./ConfirmModal";
 
 interface EventDetailsProps {
   events: Event[];
@@ -75,7 +75,6 @@ export function EventDetails({
   const [editValue, setEditValue] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   
-  // 2. Add state for modal visibility
   const [showDeleteModal, setShowDeleteModal] = useState(false); 
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -104,18 +103,17 @@ export function EventDetails({
 
   const isOrganizer = currentUser?.id === event.organizerId || currentUser?.role === 'admin';
 
-  // --- DELETE HANDLER (UPDATED) ---
-  
-  // Just open the modal
+  // --- DELETE HANDLER ---
   const handleDeleteClick = () => {
     setShowDeleteModal(true);
   };
 
-  // Actual API call triggers here
   const confirmDelete = async () => {
     setIsDeleting(true);
     try {
-      await api.delete(`/events/${event.id}`);
+      // Use centralized API
+      await eventsApi.delete(event.id);
+      
       toast.success("Eveniment șters cu succes!");
       onEventUpdated?.();
       navigate("/"); 
@@ -163,9 +161,12 @@ export function EventDetails({
 
     setIsSaving(true);
     try {
-      await api.patch(`/events/${event.id}`, payload);
+      // Use centralized API
+      await eventsApi.update(event.id, payload);
+      
       setEvent((prev) => prev ? ({ ...prev, ...payload }) : prev);
       onEventUpdated?.();
+      
       toast.success("Actualizat cu succes!");
       setEditingField(null);
     } catch (error) {
@@ -188,8 +189,8 @@ export function EventDetails({
     setIsSubmittingComment(true);
 
     try {
-      const res = await api.post(`/events/${event.id}/comments`, { text });
-      const created = res.data; 
+      // Use centralized API
+      const created = await eventsApi.addComment(event.id, text);
 
       setComments((prev) => [
         {
@@ -205,7 +206,9 @@ export function EventDetails({
       setCommentText("");
       toast.success("Comentariu trimis!");
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Nu am putut trimite comentariul.");
+        // Safe check for axios error structure
+      const msg = err.response?.data?.message || "Nu am putut trimite comentariul.";
+      toast.error(msg);
     } finally {
       setIsSubmittingComment(false);
     }
@@ -317,6 +320,7 @@ export function EventDetails({
             {/* Event Info */}
             <div className="flex flex-col">
               
+              {/* Category Editing */}
               <div className="mb-3 flex items-center">
                 {editingField === 'category' ? (
                     <div className="flex items-center gap-2">
@@ -374,6 +378,7 @@ export function EventDetails({
               </div>
 
               <div className="space-y-3 mb-6">
+                {/* Combined Date & Time */}
                 <div className="flex items-center gap-3 text-gray-700">
                   <Calendar className="h-5 w-5 text-blue-600" />
                   <div className="flex-1">
@@ -392,7 +397,7 @@ export function EventDetails({
                                 <label className="text-xs font-semibold text-gray-500">Oră</label>
                                 <Input 
                                     type="text"
-                                    className="h-8 w-32 bg-white"
+                                    className="h-8 w-24 bg-white"
                                     value={editValue.split('|')[1]} 
                                     onChange={(e) => setEditValue(`${editValue.split('|')[0]}|${e.target.value}`)}
                                 />
@@ -532,6 +537,7 @@ export function EventDetails({
       <div className="container mx-auto px-4 py-8">
         <div className="grid md:grid-cols-3 gap-6">
           <div className="md:col-span-2 space-y-6">
+            {/* Description */}
             <div className="bg-white rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">Despre eveniment</h2>
@@ -561,6 +567,7 @@ export function EventDetails({
               )}
             </div>
 
+            {/* Comments Section */}
             <div className="bg-white rounded-lg p-6">
               <h2 className="mb-4">Întrebări și comentarii</h2>
 
@@ -639,14 +646,19 @@ export function EventDetails({
                 </div>
               </div>
 
-              {/* DELETE BUTTON */}
+              {/* DELETE BUTTON SECTION */}
               {isOrganizer && (
                 <div className="mt-6 pt-4 border-t">
                     <Button 
                         className="w-full bg-red-600 hover:bg-red-700 text-white" 
                         onClick={handleDeleteClick}
+                        disabled={isDeleting}
                     >
-                        <Trash2 className="mr-2 h-4 w-4" /> Șterge Eveniment
+                        {isDeleting ? "Se șterge..." : (
+                            <>
+                                <Trash2 className="mr-2 h-4 w-4" /> Șterge Eveniment
+                            </>
+                        )}
                     </Button>
                 </div>
               )}
@@ -666,7 +678,6 @@ export function EventDetails({
         </div>
       </div>
 
-      {/* 3. Render Modal */}
       <ConfirmModal 
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
