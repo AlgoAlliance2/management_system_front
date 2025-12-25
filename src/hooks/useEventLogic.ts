@@ -1,30 +1,27 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { isToday, isThisWeek, isFuture } from "date-fns";
-import type { Event, EventCategory } from "../types";
-import api from "../lib/api";
+import type { Event as AppEvent, EventCategory } from "../types";
+import { eventsApi } from "../lib/api";
 
-export function useEventLogic(searchQuery: string) {
-
-  const [events, setEvents] = useState<Event[]>([]);
+export function useEventLogic(searchQuery: string, enabled: boolean = true) {
+  const [events, setEvents] = useState<AppEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  
   const [selectedCategory, setSelectedCategory] = useState<EventCategory | "all">("all");
   const [selectedTimeframe, setSelectedTimeframe] = useState<"all" | "upcoming" | "today" | "this-week">("all");
-
   const [showSavedOnly, setShowSavedOnly] = useState(false);
   const [showAttendingOnly, setShowAttendingOnly] = useState(false);
 
  
   const fetchEvents = useCallback(async (isBackgroundUpdate = false) => {
+    if (!enabled) return;
+
     try {
       if (!isBackgroundUpdate) setIsLoading(true);
-      
-      
-      const response = await api.get('/events'); 
-      setEvents(response.data);
+      const data = await eventsApi.getAll();
+      setEvents(data);
       setError(null);
     } catch (err) {
       console.error("Error fetching events:", err);
@@ -35,10 +32,11 @@ export function useEventLogic(searchQuery: string) {
     } finally {
       if (!isBackgroundUpdate) setIsLoading(false);
     }
-  }, []);
+  }, [enabled, events.length]);
 
   useEffect(() => {
     
+    if (!enabled) return;
     fetchEvents();
 
     // Poll every 5 seconds to check for new events
@@ -47,116 +45,74 @@ export function useEventLogic(searchQuery: string) {
     }, 5000);
 
     return () => clearInterval(intervalId);
-  }, [fetchEvents]);
+  }, [fetchEvents, enabled]);
 
   
   
   const handleToggleSave = async (eventId: string) => {
+    const previousEvents = [...events];
+    const eventToUpdate = events.find(e => e.id === eventId);
+    if (!eventToUpdate) return;
     
-    setEvents((prevEvents) =>
-      prevEvents.map((event) =>
-        event.id === eventId ? { ...event, isSaved: !event.isSaved } : event
+    setEvents((prev) =>
+      prev.map((e) =>
+        e.id === eventId ? { ...e, isSaved: !e.isSaved } : e
       )
     );
+    // Toast immediate feedback
+    toast.success(eventToUpdate.isSaved ? "Eveniment eliminat din salvate" : "Eveniment salvat");
 
     try {
-      
-      await api.post(`/events/${eventId}/save`);
-      
-      
-      const updatedEvent = events.find(e => e.id === eventId);
-      
-      if (!updatedEvent?.isSaved) {
-        toast.success("Eveniment salvat");
-      } else {
-        toast.success("Eveniment eliminat din salvate");
-      }
+      await eventsApi.toggleSave(eventId);
     } catch (error) {
-      
-      setEvents((prevEvents) =>
-        prevEvents.map((event) =>
-          event.id === eventId ? { ...event, isSaved: !event.isSaved } : event
-        )
-      );
+      // 4. Rollback on error
+      setEvents(previousEvents);
       toast.error("Nu s-a putut actualiza starea evenimentului");
     }
   };
 
   const handleToggleAttend = async (eventId: string) => {
-    const current = events.find((e) => e.id === eventId);
-    if (!current) return;
+    const previousEvents = [...events];
+    const eventToUpdate = events.find((e) => e.id === eventId);
+    if (!eventToUpdate) return;
 
-    const nextIsAttending = !current.isAttending;
+    const nextIsAttending = !eventToUpdate.isAttending;
 
-    setEvents((prevEvents) =>
-      prevEvents.map((event) => {
-        if (event.id !== eventId) return event;
-
-        const attendees = nextIsAttending
-          ? event.attendees + 1
-          : Math.max(0, event.attendees - 1);
-
+    setEvents((prev) =>
+      prev.map((e) => {
+        if (e.id !== eventId) return e;
         return {
-          ...event,
+          ...e,
           isAttending: nextIsAttending,
-          attendees,
+          // Optimistically guess the count (API will correct us if wrong)
+          attendees: nextIsAttending ? e.attendees + 1 : Math.max(0, e.attendees - 1),
         };
       })
     );
 
+    if (nextIsAttending) {
+      toast.success("Te-ai înscris cu succes!");
+    } else {
+      toast.success("Participare anulată");
+    }
+
     try {
-      const res = await fetch(`/api/events/${eventId}/attend`, {
-        method: nextIsAttending ? "POST" : "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-         // check auth
-        },
-      });
-
-      if (!res.ok) {
-        const msg = await res.text().catch(() => "");
-        throw new Error(msg || "Eroare la actualizarea participării.");
-      }
-
-      try {
-        const data = await res.json();
-        if (typeof data?.attendees === "number" || typeof data?.isAttending === "boolean") {
-          setEvents((prevEvents) =>
-            prevEvents.map((event) => {
-              if (event.id !== eventId) return event;
-              return {
-                ...event,
-                attendees:
-                  typeof data.attendees === "number" ? data.attendees : event.attendees,
-                isAttending:
-                  typeof data.isAttending === "boolean" ? data.isAttending : event.isAttending,
-              };
-            })
-          );
-        }
-      } catch {
-        
-      }
-
-      if (nextIsAttending) {
-        toast.success("Te-ai înscris cu succes!");
-      } else {
-        toast.success("Participare anulată");
-      }
-    } catch (err: any) {
-      // Rollback 
-      setEvents((prevEvents) =>
-        prevEvents.map((event) => {
-          if (event.id !== eventId) return event;
+      const data = await eventsApi.toggleAttend(eventId);
+      // 4. Update with REAL server data (source of truth)
+      setEvents((prev) =>
+        prev.map((e) => {
+          if (e.id !== eventId) return e;
           return {
-            ...event,
-            isAttending: current.isAttending,
-            attendees: current.attendees,
+            ...e,
+            isAttending: data.isAttending,
+            attendees: data.attendees,
           };
         })
       );
-
-      toast.error(err?.message || "Nu am putut actualiza participarea.");
+    } catch (error: any) {
+      // 5. Rollback on error
+      setEvents(previousEvents);
+      toast.error(error?.response?.data?.message || "Nu am putut actualiza participarea.");
     }
   };
 
