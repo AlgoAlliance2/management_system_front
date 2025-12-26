@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { X, Bell, Calendar, AlertCircle } from "lucide-react";
+import { X, Bell, Calendar, AlertCircle, FileText, CheckCircle2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
 import type { Notification } from "../types";
@@ -26,6 +26,10 @@ export function NotificationsPanel({
 
   const getIcon = (type: string) => {
     switch (type) {
+      case "review_required":
+        return <FileText className="h-5 w-5 text-purple-600" />;
+      case "status_update":
+        return <CheckCircle2 className="h-5 w-5 text-blue-600" />;
       case "reminder":
         return <Bell className="h-5 w-5 text-blue-600" />;
       case "update":
@@ -38,15 +42,10 @@ export function NotificationsPanel({
   };
 
   const handleItemClick = (notification: Notification) => {
-    // 1. Navigate if there is an event ID
     if (notification.eventId) {
       navigate(`/event/${notification.eventId}`);
     }
-
-    // 2. Call parent handler (to close the panel)
     onNotificationClick(notification);
-
-    // 3. Mark as read if needed
     if (!notification.read) {
       onMarkAsRead(notification.id);
     }
@@ -59,7 +58,6 @@ export function NotificationsPanel({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex h-full flex-col">
-          {/* Header */}
           <div className="flex items-center justify-between border-b p-4">
             <div>
               <h2>Notificări</h2>
@@ -74,7 +72,6 @@ export function NotificationsPanel({
             </Button>
           </div>
 
-          {/* Mark all as read */}
           {unreadCount > 0 && (
             <div className="border-b p-3">
               <Button
@@ -88,7 +85,6 @@ export function NotificationsPanel({
             </div>
           )}
 
-          {/* Notifications List */}
           <ScrollArea className="flex-1">
             {notifications.length > 0 ? (
               <div className="divide-y">
@@ -106,7 +102,7 @@ export function NotificationsPanel({
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2 mb-1">
-                          <h4 className="text-sm line-clamp-1">
+                          <h4 className="text-sm line-clamp-1 font-medium">
                             {notification.title}
                           </h4>
                           {!notification.read && (

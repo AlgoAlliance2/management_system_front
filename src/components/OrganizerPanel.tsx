@@ -1,8 +1,9 @@
 import { useNavigate } from "react-router-dom";
-import { Plus, Users, Calendar, TrendingUp, Star, BarChart3 } from "lucide-react";
+import { Users, Calendar, TrendingUp, Star, Clock, XCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import type { Event, User } from "../types";
+import { Badge } from "./ui/badge";
 import { isFuture, isPast } from "date-fns";
 
 interface OrganizerPanelProps {
@@ -31,6 +32,52 @@ export function OrganizerPanel({ events, user }: OrganizerPanelProps) {
     return (prev.attendees > current.attendees) ? prev : current
   }, organizedEvents[0] || null);
 
+
+  const pendingEvents = organizedEvents.filter(e => e.status === 'pending');
+  const rejectedEvents = organizedEvents.filter(e => e.status === 'rejected');
+  const approvedEvents = organizedEvents.filter(e => e.status === 'approved' || !e.status); // Fallback for old events
+
+  const EventList = ({ list, emptyMsg }: { list: Event[], emptyMsg: string }) => (
+    list.length > 0 ? (
+      <div className="grid gap-4 md:grid-cols-2">
+        {list.map((event) => (
+          <div key={event.id} className="border rounded-lg p-4 hover:shadow-sm transition-shadow">
+            <div className="flex justify-between items-start mb-2">
+                <h3 className="font-semibold line-clamp-1">{event.title}</h3>
+                {event.status === 'pending' && <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">În Așteptare</Badge>}
+                {event.status === 'rejected' && <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Respins</Badge>}
+                {event.status === 'approved' && <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Aprobat</Badge>}
+            </div>
+            
+            <p className="text-sm text-gray-600 mb-4">
+                {event.attendees} participanți • {new Date(event.date).toLocaleDateString()}
+            </p>
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1 text-sm h-9"
+                onClick={() => navigate(`/event/${event.id}`)}
+              >
+                Vezi detalii
+              </Button>
+              {/* Only show edit explicitly if user might need to fix something */}
+              <Button
+                variant="outline"
+                className="flex-1 text-sm h-9"
+                onClick={() => navigate(`/event/${event.id}`)} // Reusing details page for edit
+              >
+                {event.status === 'rejected' ? 'Corectează' : 'Editează'}
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <p className="text-gray-500 italic py-4">{emptyMsg}</p>
+    )
+  );
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -39,13 +86,6 @@ export function OrganizerPanel({ events, user }: OrganizerPanelProps) {
           <h1 className="text-3xl font-bold tracking-tight">Panou Organizator</h1>
           <p className="text-gray-500">Statistici și performanța evenimentelor tale.</p>
         </div>
-        <Button
-          onClick={() => navigate("/create-event")}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Creează Eveniment
-        </Button>
       </div>
 
       {/* KPI Cards */}
@@ -105,37 +145,56 @@ export function OrganizerPanel({ events, user }: OrganizerPanelProps) {
         </Card>
       </div>
 
-      {/* Categories Distribution or Empty State */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
-          <CardHeader>
-            <CardTitle>Stare Evenimente</CardTitle>
-          </CardHeader>
-          <CardContent>
-             {totalEvents > 0 ? (
-                <div className="flex items-center justify-around py-4">
-                    <div className="text-center">
-                        <div className="text-3xl font-bold text-green-600">{upcomingEventsCount}</div>
-                        <div className="text-sm text-gray-500">Active / Viitoare</div>
+      <div className="space-y-8">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Panou Organizator</h1>
+      </div>
+
+      <div className="grid gap-6">
+        {/* Rejected Events (Priority) */}
+        {rejectedEvents.length > 0 && (
+            <Card className="border-red-100 bg-red-50/20">
+                <CardHeader>
+                    <div className="flex items-center gap-2 text-red-700">
+                        <XCircle className="h-5 w-5" />
+                        <CardTitle className="text-lg">Necesită Atenție (Respinse)</CardTitle>
                     </div>
-                    <div className="h-12 w-px bg-gray-200"></div>
-                    <div className="text-center">
-                        <div className="text-3xl font-bold text-gray-400">{pastEventsCount}</div>
-                        <div className="text-sm text-gray-500">Arhivă / Trecute</div>
-                    </div>
+                </CardHeader>
+                <CardContent>
+                    <EventList list={rejectedEvents} emptyMsg="" />
+                </CardContent>
+            </Card>
+        )}
+
+        {/* Pending Events */}
+        <Card>
+            <CardHeader>
+                <div className="flex items-center gap-2 text-yellow-600">
+                    <Clock className="h-5 w-5" />
+                    <CardTitle className="text-lg">În Așteptarea Aprobării</CardTitle>
                 </div>
-             ) : (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <BarChart3 className="h-10 w-10 text-gray-300 mb-2" />
-                    <p className="text-gray-500 mb-4">Nu există date statistice.</p>
-                    <Button variant="link" onClick={() => navigate("/create-event")}>
-                        Creează primul eveniment
-                    </Button>
+            </CardHeader>
+            <CardContent>
+                <EventList list={pendingEvents} emptyMsg="Nu ai evenimente în așteptare." />
+            </CardContent>
+        </Card>
+
+        {/* Active/Approved Events */}
+        <Card>
+            <CardHeader>
+                <div className="flex items-center gap-2 text-green-600">
+                    <CheckCircle2 className="h-5 w-5" />
+                    <CardTitle className="text-lg">Evenimente Active</CardTitle>
                 </div>
-             )}
-          </CardContent>
+            </CardHeader>
+            <CardContent>
+                <EventList list={approvedEvents} emptyMsg="Nu ai evenimente active momentan." />
+            </CardContent>
         </Card>
       </div>
+    </div>
+
+     
     </div>
   );
 }

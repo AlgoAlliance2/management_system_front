@@ -12,7 +12,8 @@ import {
   Check,
   X,
   Clock,
-  Trash2
+  Trash2,
+  ShieldAlert
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -78,6 +79,9 @@ export function EventDetails({
   const [showDeleteModal, setShowDeleteModal] = useState(false); 
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [showRejectModal, setShowRejectModal] = useState(false);
+
   const [commentText, setCommentText] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [comments, setComments] = useState<NonNullable<Event["comments"]>>(
@@ -102,6 +106,34 @@ export function EventDetails({
   }
 
   const isOrganizer = currentUser?.id === event.organizerId || currentUser?.role === 'admin';
+  const isAdmin = currentUser?.role === 'admin';
+
+  const handleApprove = async () => {
+    try {
+        await eventsApi.approve(event.id);
+        toast.success("Eveniment aprobat cu succes!");
+        setEvent(prev => prev ? { ...prev, status: 'approved' } : prev);
+        onEventUpdated?.();
+    } catch (error) {
+        toast.error("Eroare la aprobarea evenimentului.");
+    }
+  };
+
+  const handleReject = async () => {
+    if (!rejectionReason.trim()) {
+        toast.error("Te rugăm să introduci un motiv pentru respingere.");
+        return;
+    }
+    try {
+        await eventsApi.reject(event.id, rejectionReason);
+        toast.success("Eveniment respins.");
+        setEvent(prev => prev ? { ...prev, status: 'rejected', rejectionReason } : prev);
+        onEventUpdated?.();
+        setShowRejectModal(false);
+    } catch (error) {
+        toast.error("Eroare la respingerea evenimentului.");
+    }
+  };
 
   // --- DELETE HANDLER ---
   const handleDeleteClick = () => {
@@ -266,6 +298,49 @@ export function EventDetails({
 
   return (
     <div className="min-h-screen bg-gray-50">
+
+      {/* --- ADMIN REVIEW BANNER --- */}
+      {event.status === 'pending' && isAdmin && (
+        <div className="bg-yellow-50 border-b border-yellow-200 p-4 sticky top-[64px] z-40">
+            <div className="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                    <ShieldAlert className="h-6 w-6 text-yellow-600" />
+                    <div>
+                        <h3 className="font-semibold text-yellow-900">Revizuire Necesară</h3>
+                        <p className="text-sm text-yellow-700">Acest eveniment așteaptă aprobarea administratorului.</p>
+                    </div>
+                </div>
+                <div className="flex gap-3">
+                    <Button variant="outline" className="border-red-200 text-red-700 hover:bg-red-50" onClick={() => setShowRejectModal(true)}>
+                        Respinge
+                    </Button>
+                    <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={handleApprove}>
+                        Aprobă Evenimentul
+                    </Button>
+                </div>
+            </div>
+        </div>
+      )}
+
+      {/* --- ORGANIZER REJECTION NOTICE --- */}
+      {event.status === 'rejected' && isOrganizer && (
+        <div className="bg-red-50 border-b border-red-200 p-4 sticky top-[64px] z-40">
+            <div className="container mx-auto">
+                <div className="flex items-center gap-3 mb-2">
+                    <X className="h-6 w-6 text-red-600" />
+                    <h3 className="font-semibold text-red-900">Eveniment Respins</h3>
+                </div>
+                <p className="text-sm text-red-800">
+                    <strong>Motiv:</strong> {event.rejectionReason || "Niciun motiv specificat."}
+                </p>
+                <p className="text-xs text-red-600 mt-2">
+                    Te rugăm să editezi detaliile conform sugestiilor și să ne contactezi pentru reevaluare.
+                </p>
+            </div>
+        </div>
+      )}
+
+
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 py-4">
           <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
@@ -688,6 +763,25 @@ export function EventDetails({
         isDestructive={true}
         isLoading={isDeleting}
       />
+
+      {showRejectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden p-6 space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900">Respinge Evenimentul</h3>
+                <p className="text-sm text-gray-500">Te rugăm să specifici motivul respingerii pentru organizator.</p>
+                <Textarea 
+                    value={rejectionReason}
+                    onChange={(e) => setRejectionReason(e.target.value)}
+                    placeholder="Ex: Descrierea nu este suficient de clară..."
+                    rows={4}
+                />
+                <div className="flex justify-end gap-3">
+                    <Button variant="outline" onClick={() => setShowRejectModal(false)}>Anulează</Button>
+                    <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={handleReject}>Confirmă Respingerea</Button>
+                </div>
+            </div>
+        </div>
+      )}
     </div>
   );
 }

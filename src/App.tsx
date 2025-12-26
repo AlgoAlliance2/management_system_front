@@ -252,3 +252,9 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
+
+
+
+// Trebuie de adaugat ceva statistici la organizatori si admini
+// + trebuie de vazut ce e cu validarea si trnsimiterea de qr code pentru evenimente

@@ -104,6 +104,16 @@ export const eventsApi = {
   toggleSave: async (id: string) => {
     const response = await api.post<{ isSaved: boolean }>(`/events/${id}/save`);
     return response.data;
+  },
+
+  approve: async (id: string) => {
+    const response = await api.post<AppEvent>(`/events/${id}/approve`);
+    return response.data;
+  },
+
+  reject: async (id: string, reason: string) => {
+    const response = await api.post<AppEvent>(`/events/${id}/reject`, { reason });
+    return response.data;
   }
 };
 
