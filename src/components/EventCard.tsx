@@ -79,7 +79,7 @@ export function EventCard({
   }
 
   return (
-    <Card 
+    <Card
       className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" // Added cursor-pointer
       onClick={handleViewDetails} // Make whole card clickable
     >
@@ -146,13 +146,12 @@ export function EventCard({
         {event.maxAttendees && (
           <div className="mt-2 h-2 bg-gray-100 rounded-full overflow-hidden">
             <div
-              className={`h-full transition-all ${
-                attendancePercentage >= 90
+              className={`h-full transition-all ${attendancePercentage >= 90
                   ? "bg-red-500"
                   : attendancePercentage >= 70
-                  ? "bg-orange-500"
-                  : "bg-blue-600"
-              }`}
+                    ? "bg-orange-500"
+                    : "bg-blue-600"
+                }`}
               style={{ width: `${Math.min(attendancePercentage, 100)}%` }}
             />
           </div>
@@ -168,8 +167,8 @@ export function EventCard({
         <Button
           className="flex-1 bg-blue-600 hover:bg-blue-700"
           onClick={(e) => {
-             e.stopPropagation(); // Prevent double navigation trigger
-             handleViewDetails();
+            e.stopPropagation(); // Prevent double navigation trigger
+            handleViewDetails();
           }}
         >
           Detalii

@@ -10,7 +10,7 @@ export function useEventLogic(searchQuery: string, enabled: boolean = true) {
   const [error, setError] = useState<string | null>(null);
   
   const [selectedCategory, setSelectedCategory] = useState<EventCategory | "all">("all");
-  const [selectedTimeframe, setSelectedTimeframe] = useState<"all" | "upcoming" | "today" | "this-week">("all");
+  const [selectedTimeframe, setSelectedTimeframe] = useState<"all" | "upcoming" | "today" | "this-week">("upcoming");
   const [showSavedOnly, setShowSavedOnly] = useState(false);
   const [showAttendingOnly, setShowAttendingOnly] = useState(false);
 

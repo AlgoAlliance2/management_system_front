@@ -108,10 +108,10 @@ export function CreateEventForm({ onSubmit }: CreateEventFormProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6 max-w-3xl">
-        <Button 
-            variant="ghost" 
-            onClick={() => navigate(-1)} // 4. Navigate back in history
-            className="mb-6"
+        <Button
+          variant="ghost"
+          onClick={() => navigate(-1)} // 4. Navigate back in history
+          className="mb-6"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Înapoi
@@ -128,19 +128,17 @@ export function CreateEventForm({ onSubmit }: CreateEventFormProps) {
             {[1, 2, 3].map((s) => (
               <div key={s} className="flex items-center flex-1">
                 <div
-                  className={`flex items-center justify-center w-10 h-10 rounded-full ${
-                    s <= step
+                  className={`flex items-center justify-center w-10 h-10 rounded-full ${s <= step
                       ? "bg-blue-600 text-white"
                       : "bg-gray-200 text-gray-600"
-                  }`}
+                    }`}
                 >
                   {s}
                 </div>
                 {s < 3 && (
                   <div
-                    className={`flex-1 h-1 mx-2 ${
-                      s < step ? "bg-blue-600" : "bg-gray-200"
-                    }`}
+                    className={`flex-1 h-1 mx-2 ${s < step ? "bg-blue-600" : "bg-gray-200"
+                      }`}
                   />
                 )}
               </div>

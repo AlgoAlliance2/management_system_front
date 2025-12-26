@@ -1,7 +1,9 @@
+import { useState, useEffect } from 'react';
 import type { Event, EventCategory } from '../types';
 import { EventCard } from './EventCard';
 import { EventFilters } from './EventFilters';
 import { Skeleton } from './ui/skeleton';
+import { Button } from './ui/button';
 
 interface HomePageProps {
   events: Event[];
@@ -19,6 +21,8 @@ interface HomePageProps {
   isLoading?: boolean;
 }
 
+const ITEMS_PER_PAGE = 12;
+
 export function HomePage({
   events,
   onToggleSave,
@@ -34,6 +38,21 @@ export function HomePage({
   hasActiveFilters,
   isLoading = false,
 }: HomePageProps) {
+  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
+
+  // Reset pagination when filters change (the 'events' array changes)
+  useEffect(() => {
+    setVisibleCount(ITEMS_PER_PAGE);
+  }, [events, selectedCategory, selectedTimeframe, showSavedOnly, showAttendingOnly]);
+
+  const handleLoadMore = () => {
+    setVisibleCount((prev) => prev + ITEMS_PER_PAGE);
+  };
+
+  const visibleEvents = events.slice(0, visibleCount);
+  const hasMoreEvents = visibleCount < events.length;
+
+
   return (
     <div className="space-y-6">
       {/* Hero Section */}
@@ -43,18 +62,18 @@ export function HomePage({
           Descoperă și participă la evenimente universitare care îți îmbogățesc experiența academică
         </p>
         <div className="flex flex-wrap gap-4 text-blue-100">
-          <div className="flex items-center gap-2">
+          {/* <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-blue-300" />
             <span>{events.length} evenimente active</span>
-          </div>
+          </div> */}
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-blue-300" />
             <span>Gratuit pentru studenți</span>
           </div>
-          <div className="flex items-center gap-2">
+          {/* <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-blue-300" />
             <span>Înregistrare simplă</span>
-          </div>
+          </div> */}
         </div>
       </div>
 
@@ -76,15 +95,15 @@ export function HomePage({
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2>Evenimente disponibile</h2>
-          <span className="text-gray-600">
-            {events.length} {events.length === 1 ? 'eveniment' : 'evenimente'}
+          <span className="text-sm text-gray-500">
+            Afișăm {Math.min(visibleCount, events.length)} din {events.length}
           </span>
         </div>
 
         {isLoading ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="border rounded-lg overflow-hidden">
+              <div key={i} className="border rounded-lg overflow-hidden bg-white">
                 <Skeleton className="h-48 w-full" />
                 <div className="p-4 space-y-3">
                   <Skeleton className="h-4 w-20" />
@@ -96,20 +115,36 @@ export function HomePage({
             ))}
           </div>
         ) : events.length > 0 ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {events.map((event) => (
-              <EventCard
-                key={event.id}
-                event={event}
-                onToggleSave={onToggleSave}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {visibleEvents.map((event) => (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  onToggleSave={onToggleSave}
+                />
+              ))}
+            </div>
+
+            {/* Load More Button */}
+            {hasMoreEvents && (
+              <div className="mt-8 flex justify-center">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={handleLoadMore}
+                  className="min-w-[200px]"
+                >
+                  Vezi mai multe evenimente
+                </Button>
+              </div>
+            )}
+          </>
         ) : (
-          <div className="text-center py-12 bg-white rounded-lg border">
+          <div className="text-center py-16 bg-white rounded-lg border border-dashed">
             <div className="max-w-md mx-auto">
               <svg
-                className="h-24 w-24 mx-auto text-gray-300 mb-4"
+                className="h-24 w-24 mx-auto text-gray-200 mb-4"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -117,23 +152,20 @@ export function HomePage({
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={1.5}
+                  strokeWidth={1}
                   d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                 />
               </svg>
-              <h3 className="mb-2">Nu am găsit evenimente</h3>
-              <p className="text-gray-600 mb-4">
+              <h3 className="text-lg font-medium text-gray-900 mb-1">Nu am găsit evenimente</h3>
+              <p className="text-gray-500 mb-6">
                 {hasActiveFilters
-                  ? 'Încearcă să ajustezi filtrele pentru a găsi evenimente'
-                  : 'Nu există evenimente disponibile momentan'}
+                  ? 'Încearcă să ștergi filtrele pentru a vedea mai multe rezultate.'
+                  : 'Nu există evenimente disponibile momentan.'}
               </p>
               {hasActiveFilters && (
-                <button
-                  onClick={onClearFilters}
-                  className="text-blue-600 hover:underline"
-                >
+                <Button onClick={onClearFilters} variant="outline">
                   Șterge toate filtrele
-                </button>
+                </Button>
               )}
             </div>
           </div>

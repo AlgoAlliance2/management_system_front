@@ -63,7 +63,9 @@ export function UserProfile({
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t">
+        <div className={(user.role === 'organizer' || user.role === 'admin') ?
+          "grid grid-cols-3 gap-4 mt-6 pt-6 border-t" :
+          "grid grid-cols-2 gap-4 mt-6 pt-6 border-t"}>
           <div className="text-center">
             <div className="flex items-center justify-center gap-2 mb-1">
               <CheckCircle className="h-5 w-5 text-blue-600" />
@@ -76,12 +78,14 @@ export function UserProfile({
             </div>
             <p className="text-sm text-gray-600">Salvate</p>
           </div>
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <Calendar className="h-5 w-5 text-blue-600" />
+          {(user.role === 'organizer' || user.role === 'admin') && (
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <Calendar className="h-5 w-5 text-blue-600" />
+              </div>
+              <p className="text-sm text-gray-600">Organizate</p>
             </div>
-            <p className="text-sm text-gray-600">Organizate</p>
-          </div>
+          )}
         </div>
       </div>
 

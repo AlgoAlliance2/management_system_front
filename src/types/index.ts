@@ -17,6 +17,8 @@ export interface CreateEventInput {
   imageUrl: string;
 }
 
+export type EventStatus = 'pending' | 'approved' | 'rejected';
+
 export interface Event {
   id: string;
   title: string;
@@ -33,6 +35,8 @@ export interface Event {
   isAttending?: boolean;
   isSaved?: boolean;
   comments?: Comment[];
+  status: EventStatus; 
+  rejectionReason?: string;
 }
 
 export interface Comment {
@@ -43,17 +47,21 @@ export interface Comment {
   date: Date;
 }
 
+export type UserRole = 'student' | 'organizer' | 'admin';
+
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'user' | 'organizer' | 'admin';
+  role: UserRole;
   avatar?: string;
 }
 
+export type NotificationType = 'reminder' | 'update' | 'event' | 'review_required' | 'status_update';
+
 export interface Notification {
   id: string;
-  type: 'event' | 'reminder' | 'update';
+  type: NotificationType;
   title: string;
   message: string;
   date: Date;
