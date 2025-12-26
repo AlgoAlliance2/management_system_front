@@ -115,16 +115,16 @@ export function Header({
                 {/* Create Event Button (Desktop) */}
                 {(currentUser.role === "organizer" ||
                   currentUser.role === "admin") && (
-                  <Button
-                    asChild
-                    className="hidden md:flex bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Link to="/create-event">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Creează Eveniment
-                    </Link>
-                  </Button>
-                )}
+                    <Button
+                      asChild
+                      className="hidden md:flex bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Link to="/create-event">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Creează Eveniment
+                      </Link>
+                    </Button>
+                  )}
 
                 {/* Notifications */}
                 <Button

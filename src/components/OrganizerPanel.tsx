@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Users, Calendar, TrendingUp, Star, Clock, XCircle, CheckCircle2 } from "lucide-react";
+import { Plus, Users, Calendar, TrendingUp, Star, Clock, XCircle, CheckCircle2, History } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import type { Event, User } from "../types";
@@ -23,7 +23,8 @@ export function OrganizerPanel({ events, user }: OrganizerPanelProps) {
   const totalEvents = organizedEvents.length;
   const totalAttendees = organizedEvents.reduce((acc, curr) => acc + curr.attendees, 0);
   const averageAttendance = totalEvents > 0 ? Math.round(totalAttendees / totalEvents) : 0;
-  
+
+  // Counters for KPI cards
   const upcomingEventsCount = organizedEvents.filter(e => isFuture(new Date(e.date))).length;
   const pastEventsCount = organizedEvents.filter(e => isPast(new Date(e.date))).length;
 
@@ -32,10 +33,14 @@ export function OrganizerPanel({ events, user }: OrganizerPanelProps) {
     return (prev.attendees > current.attendees) ? prev : current
   }, organizedEvents[0] || null);
 
-
+  // 3. Categorize Events for Lists
   const pendingEvents = organizedEvents.filter(e => e.status === 'pending');
   const rejectedEvents = organizedEvents.filter(e => e.status === 'rejected');
-  const approvedEvents = organizedEvents.filter(e => e.status === 'approved' || !e.status); // Fallback for old events
+
+  // Approved events split by date
+  const allApprovedEvents = organizedEvents.filter(e => e.status === 'approved' || !e.status);
+  const activeEvents = allApprovedEvents.filter(e => isFuture(new Date(e.date)));
+  const historyEvents = allApprovedEvents.filter(e => isPast(new Date(e.date)));
 
   const EventList = ({ list, emptyMsg }: { list: Event[], emptyMsg: string }) => (
     list.length > 0 ? (
@@ -43,14 +48,14 @@ export function OrganizerPanel({ events, user }: OrganizerPanelProps) {
         {list.map((event) => (
           <div key={event.id} className="border rounded-lg p-4 hover:shadow-sm transition-shadow">
             <div className="flex justify-between items-start mb-2">
-                <h3 className="font-semibold line-clamp-1">{event.title}</h3>
-                {event.status === 'pending' && <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">În Așteptare</Badge>}
-                {event.status === 'rejected' && <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Respins</Badge>}
-                {event.status === 'approved' && <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Aprobat</Badge>}
+              <h3 className="font-semibold line-clamp-1">{event.title}</h3>
+              {event.status === 'pending' && <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">În Așteptare</Badge>}
+              {event.status === 'rejected' && <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Respins</Badge>}
+              {event.status === 'approved' && <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Aprobat</Badge>}
             </div>
-            
+
             <p className="text-sm text-gray-600 mb-4">
-                {event.attendees} participanți • {new Date(event.date).toLocaleDateString()}
+              {event.attendees} participanți • {new Date(event.date).toLocaleDateString()}
             </p>
 
             <div className="flex gap-2">
@@ -86,6 +91,13 @@ export function OrganizerPanel({ events, user }: OrganizerPanelProps) {
           <h1 className="text-3xl font-bold tracking-tight">Panou Organizator</h1>
           <p className="text-gray-500">Statistici și performanța evenimentelor tale.</p>
         </div>
+        <Button
+          onClick={() => navigate("/create-event")}
+          className="bg-blue-600 hover:bg-blue-700"
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Creează Eveniment
+        </Button>
       </div>
 
       {/* KPI Cards */}
@@ -145,56 +157,61 @@ export function OrganizerPanel({ events, user }: OrganizerPanelProps) {
         </Card>
       </div>
 
-      <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Panou Organizator</h1>
-      </div>
-
       <div className="grid gap-6">
         {/* Rejected Events (Priority) */}
         {rejectedEvents.length > 0 && (
-            <Card className="border-red-100 bg-red-50/20">
-                <CardHeader>
-                    <div className="flex items-center gap-2 text-red-700">
-                        <XCircle className="h-5 w-5" />
-                        <CardTitle className="text-lg">Necesită Atenție (Respinse)</CardTitle>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <EventList list={rejectedEvents} emptyMsg="" />
-                </CardContent>
-            </Card>
+          <Card className="border-red-100 bg-red-50/20">
+            <CardHeader>
+              <div className="flex items-center gap-2 text-red-700">
+                <XCircle className="h-5 w-5" />
+                <CardTitle className="text-lg">Necesită Atenție (Respinse)</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <EventList list={rejectedEvents} emptyMsg="" />
+            </CardContent>
+          </Card>
         )}
 
         {/* Pending Events */}
         <Card>
-            <CardHeader>
-                <div className="flex items-center gap-2 text-yellow-600">
-                    <Clock className="h-5 w-5" />
-                    <CardTitle className="text-lg">În Așteptarea Aprobării</CardTitle>
-                </div>
-            </CardHeader>
-            <CardContent>
-                <EventList list={pendingEvents} emptyMsg="Nu ai evenimente în așteptare." />
-            </CardContent>
+          <CardHeader>
+            <div className="flex items-center gap-2 text-yellow-600">
+              <Clock className="h-5 w-5" />
+              <CardTitle className="text-lg">În Așteptarea Aprobării</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <EventList list={pendingEvents} emptyMsg="Nu ai evenimente în așteptare." />
+          </CardContent>
         </Card>
 
-        {/* Active/Approved Events */}
+        {/* Active/Future Events */}
         <Card>
-            <CardHeader>
-                <div className="flex items-center gap-2 text-green-600">
-                    <CheckCircle2 className="h-5 w-5" />
-                    <CardTitle className="text-lg">Evenimente Active</CardTitle>
-                </div>
-            </CardHeader>
-            <CardContent>
-                <EventList list={approvedEvents} emptyMsg="Nu ai evenimente active momentan." />
-            </CardContent>
+          <CardHeader>
+            <div className="flex items-center gap-2 text-green-600">
+              <CheckCircle2 className="h-5 w-5" />
+              <CardTitle className="text-lg">Evenimente Active (Viitoare)</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <EventList list={activeEvents} emptyMsg="Nu ai evenimente active momentan." />
+          </CardContent>
+        </Card>
+
+        {/* Past Events / History */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2 text-gray-600">
+              <History className="h-5 w-5" />
+              <CardTitle className="text-lg">Istoric Evenimente</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <EventList list={historyEvents} emptyMsg="Nu ai evenimente trecute." />
+          </CardContent>
         </Card>
       </div>
-    </div>
-
-     
     </div>
   );
 }

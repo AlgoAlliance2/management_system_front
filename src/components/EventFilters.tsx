@@ -74,11 +74,10 @@ export function EventFilters({
           <Badge
             key={cat.value}
             variant={selectedCategory === cat.value ? 'default' : 'outline'}
-            className={`cursor-pointer hover:bg-blue-50 ${
-              selectedCategory === cat.value
+            className={`cursor-pointer hover:bg-blue-50 ${selectedCategory === cat.value
                 ? 'bg-blue-600 text-white'
                 : 'text-gray-700'
-            }`}
+              }`}
             onClick={() => onCategoryChange(cat.value)}
           >
             {cat.label}

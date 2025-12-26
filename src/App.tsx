@@ -6,7 +6,7 @@ import { EventDetails } from "./components/EventDetails";
 import { CalendarView } from "./components/CalendarView";
 import { UserProfile } from "./components/UserProfile";
 import { OrganizerPanel } from "./components/OrganizerPanel";
-import { AdminPanel } from "./components/AdminPanel"; 
+import { AdminPanel } from "./components/AdminPanel";
 import { AuthForm } from "./components/AuthForm";
 import { CreateEventForm } from "./components/CreateEventForm";
 import { NotificationsPanel } from "./components/NotificationsPanel";
@@ -30,8 +30,8 @@ export default function App() {
     events,
     filteredEvents,
     error: eventsError,
-    isLoading: isEventsLoading, 
-    refetch, 
+    isLoading: isEventsLoading,
+    refetch,
     selectedCategory,
     setSelectedCategory,
     selectedTimeframe,
@@ -92,7 +92,7 @@ export default function App() {
     try {
       // Use centralized API
       await notificationsApi.markRead(notificationId);
-      
+
       setNotifications((prev) =>
         prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
       );
@@ -106,7 +106,7 @@ export default function App() {
     try {
       // Use centralized API
       await notificationsApi.markAllRead();
-      
+
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       toast.success("Toate notificările au fost marcate ca citite");
     } catch (error) {
@@ -123,7 +123,7 @@ export default function App() {
     try {
       // Use centralized API
       await eventsApi.create(eventData);
-      
+
       toast.success("Eveniment creat cu succes!");
       refetch();
     } catch (error) {
@@ -205,32 +205,32 @@ export default function App() {
             />
             <Route path="/calendar" element={<CalendarView events={events} onToggleSave={handleToggleSave} />} />
             <Route path="/profile" element={
-              <UserProfile user={currentUser} 
-                attendingEvents={attendingEvents} 
-                onToggleSave={handleToggleSave} 
-                organizedEvents={organizedEvents} 
-                savedEvents={savedEvents} 
-                />
-              } 
+              <UserProfile user={currentUser}
+                attendingEvents={attendingEvents}
+                onToggleSave={handleToggleSave}
+                organizedEvents={organizedEvents}
+                savedEvents={savedEvents}
+              />
+            }
             />
-            
+
             {/* Organizer Route */}
             <Route path="/organizer" element={<OrganizerPanel events={events} user={currentUser} />} />
-            
+
             {/* Admin Route - Only accessible if user role is admin */}
             {currentUser.role === 'admin' && (
-                <Route path="/admin" element={<AdminPanel events={events} user={currentUser} />} />
+              <Route path="/admin" element={<AdminPanel events={events} user={currentUser} />} />
             )}
 
             <Route path="/event/:id" element={
-              <EventDetails 
-                events={events} 
-                currentUser={currentUser} 
-                onEventUpdated={refetch} 
-                onToggleAttend={handleToggleAttend} 
-                onToggleSave={handleToggleSave} 
-                />
-              } 
+              <EventDetails
+                events={events}
+                currentUser={currentUser}
+                onEventUpdated={refetch}
+                onToggleAttend={handleToggleAttend}
+                onToggleSave={handleToggleSave}
+              />
+            }
             />
             <Route path="/create-event" element={<CreateEventForm onSubmit={handleCreateEventSubmit} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
@@ -246,7 +246,7 @@ export default function App() {
             onMarkAllAsRead={handleMarkAllAsRead}
           />
         )}
-        
+
         <Toaster position="bottom-right" />
       </div>
     </BrowserRouter>
@@ -258,3 +258,4 @@ export default function App() {
 
 // Trebuie de adaugat ceva statistici la organizatori si admini
 // + trebuie de vazut ce e cu validarea si trnsimiterea de qr code pentru evenimente
+// + la evenimentele mele de adaugat o sectiune cu 'Am participat' si la particip de gandit cum de pus evenimentele la trecut

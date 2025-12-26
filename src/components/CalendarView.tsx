@@ -20,7 +20,7 @@ export function CalendarView({ events, onToggleSave }: CalendarViewProps) {
   const monthEnd = endOfMonth(currentMonth);
   const calendarStart = startOfWeek(monthStart, { locale: ro });
   const calendarEnd = endOfWeek(monthEnd, { locale: ro });
-  
+
   const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
   const getEventsForDay = (day: Date) => {
@@ -134,7 +134,7 @@ export function CalendarView({ events, onToggleSave }: CalendarViewProps) {
       {/* Upcoming Events Preview */}
       {!selectedDate && (
         <div className="bg-white rounded-lg p-6 border">
-          <h3 className="mb-4">Evenimente viitoare în {format(currentMonth, 'MMMM', { locale: ro })}</h3>
+          <h3 className="mb-4">Evenimente în {format(currentMonth, 'MMMM', { locale: ro })}</h3>
           {events
             .filter(event => isSameMonth(new Date(event.date), currentMonth))
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())

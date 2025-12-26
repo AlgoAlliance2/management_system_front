@@ -35,7 +35,7 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
 
     if (!loginData.email) {
       newErrors.loginEmail = "Email-ul este obligatoriu";
-    } 
+    }
     if (!loginData.password) {
       newErrors.loginPassword = "Parola este obligatorie";
     }
@@ -73,7 +73,7 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
 
     if (!registerData.password) newErrors.registerPassword = "Parola este obligatorie";
     else if (registerData.password.length < 6) newErrors.registerPassword = "Minim 6 caractere";
-    
+
     if (registerData.password !== registerData.confirmPassword) {
       newErrors.confirmPassword = "Parolele nu se potrivesc";
     }
@@ -89,11 +89,11 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
     try {
       // 1. Call Backend
       const user = await auth.register(
-        registerData.name, 
-        registerData.email, 
+        registerData.name,
+        registerData.email,
         registerData.password
       );
-      
+
       // 2. Success
       toast.success("Cont creat cu succes!");
       onRegister(user);
@@ -165,9 +165,8 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
                       id="login-password"
                       type="password"
                       placeholder="••••••••"
-                      className={`pl-10 ${
-                        errors.loginPassword ? "border-red-500" : ""
-                      }`}
+                      className={`pl-10 ${errors.loginPassword ? "border-red-500" : ""
+                        }`}
                       value={loginData.password}
                       onChange={(e) => {
                         setLoginData({
@@ -254,9 +253,8 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
                       id="register-password"
                       type="password"
                       placeholder="••••••••"
-                      className={`pl-10 ${
-                        errors.registerPassword ? "border-red-500" : ""
-                      }`}
+                      className={`pl-10 ${errors.registerPassword ? "border-red-500" : ""
+                        }`}
                       value={registerData.password}
                       onChange={(e) => {
                         setRegisterData({
@@ -282,9 +280,8 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
                       id="confirm-password"
                       type="password"
                       placeholder="••••••••"
-                      className={`pl-10 ${
-                        errors.confirmPassword ? "border-red-500" : ""
-                      }`}
+                      className={`pl-10 ${errors.confirmPassword ? "border-red-500" : ""
+                        }`}
                       value={registerData.confirmPassword}
                       onChange={(e) => {
                         setRegisterData({
@@ -303,7 +300,7 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
                 </div>
 
                 <Button type="submit" className="w-full bg-blue-600" disabled={isLoading}>
-                   {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Creează cont"}
+                  {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Creează cont"}
                 </Button>
 
                 <p className="text-xs text-gray-500 text-center">

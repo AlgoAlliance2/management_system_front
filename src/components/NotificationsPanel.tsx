@@ -91,9 +91,8 @@ export function NotificationsPanel({
                 {notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
-                      !notification.read ? "bg-blue-50/50" : ""
-                    }`}
+                    className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${!notification.read ? "bg-blue-50/50" : ""
+                      }`}
                     onClick={() => handleItemClick(notification)}
                   >
                     <div className="flex gap-3">

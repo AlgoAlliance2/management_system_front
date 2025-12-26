@@ -26,7 +26,7 @@ export function ConfirmModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div 
+      <div
         className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
@@ -40,7 +40,7 @@ export function ConfirmModal({
             )}
             <h3 className="font-semibold text-lg text-gray-900">{title}</h3>
           </div>
-          <button 
+          <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-500 transition-colors"
           >
@@ -55,19 +55,18 @@ export function ConfirmModal({
 
         {/* Footer */}
         <div className="flex justify-end gap-3 p-4 bg-gray-50 border-t">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={onClose}
             disabled={isLoading}
           >
             Anulează
           </Button>
           <Button
-            className={`${
-              isDestructive 
-                ? "bg-red-600 hover:bg-red-700 focus:ring-red-600" 
+            className={`${isDestructive
+                ? "bg-red-600 hover:bg-red-700 focus:ring-red-600"
                 : "bg-blue-600 hover:bg-blue-700"
-            } text-white`}
+              } text-white`}
             onClick={onConfirm}
             disabled={isLoading}
           >
