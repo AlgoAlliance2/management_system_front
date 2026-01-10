@@ -223,7 +223,6 @@ export function AdminPanel({ events, user }: AdminPanelProps) {
                 <SelectContent>
                   <SelectItem value="all">Toate Rolurile</SelectItem>
                   <SelectItem value="student">Student</SelectItem>
-                  <SelectItem value="professor">Profesor</SelectItem>
                   <SelectItem value="organizer">Organizator</SelectItem>
                   <SelectItem value="admin">Administrator</SelectItem>
                 </SelectContent>
@@ -270,7 +269,6 @@ export function AdminPanel({ events, user }: AdminPanelProps) {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="student">Student</SelectItem>
-                              <SelectItem value="professor">Profesor</SelectItem>
                               <SelectItem value="organizer">Organizator</SelectItem>
                               <SelectItem value="admin">Admin</SelectItem>
                             </SelectContent>

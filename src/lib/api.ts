@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { User, Event as AppEvent, Comment, UserRole, CreateEventInput } from '../types';
+import type { User, Event as AppEvent, Comment, UserRole, CreateEventInput, Notification as AppNotification } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -118,6 +118,11 @@ export const eventsApi = {
 };
 
 export const notificationsApi = {
+  getAll: async () => {
+    const response = await api.get<AppNotification[]>('/notifications');
+    return response.data;
+  },
+
   markRead: async (id: string) => {
     const response = await api.patch<{ success: boolean }>(`/notifications/${id}/read`);
     return response.data;

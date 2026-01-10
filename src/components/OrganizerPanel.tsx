@@ -44,7 +44,7 @@ export function OrganizerPanel({ events, user }: OrganizerPanelProps) {
 
   const EventList = ({ list, emptyMsg }: { list: Event[], emptyMsg: string }) => (
     list.length > 0 ? (
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         {list.map((event) => (
           <div key={event.id} className="border rounded-lg p-4 hover:shadow-sm transition-shadow">
             <div className="flex justify-between items-start mb-2">
@@ -67,13 +67,6 @@ export function OrganizerPanel({ events, user }: OrganizerPanelProps) {
                 Vezi detalii
               </Button>
               {/* Only show edit explicitly if user might need to fix something */}
-              <Button
-                variant="outline"
-                className="flex-1 text-sm h-9"
-                onClick={() => navigate(`/event/${event.id}`)} // Reusing details page for edit
-              >
-                {event.status === 'rejected' ? 'Corectează' : 'Editează'}
-              </Button>
             </div>
           </div>
         ))}

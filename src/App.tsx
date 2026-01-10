@@ -12,10 +12,9 @@ import { CreateEventForm } from "./components/CreateEventForm";
 import { NotificationsPanel } from "./components/NotificationsPanel";
 import { Toaster } from "./components/ui/sonner";
 import { useEventLogic } from "./hooks/useEventLogic";
-import { mockNotifications } from "./data/mockData";
 import { toast } from "sonner";
 import { auth, eventsApi, notificationsApi } from "./lib/api"; // Updated imports
-import type { User, Notification, CreateEventInput } from "./types";
+import type { User, Notification as AppNotification, CreateEventInput } from "./types";
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -23,7 +22,7 @@ export default function App() {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
 
   const {
@@ -75,6 +74,28 @@ export default function App() {
 
     initAuth();
   }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setNotifications([]);
+      return;
+    }
+
+    const fetchNotifications = async () => {
+      try {
+        const data = await notificationsApi.getAll();
+        setNotifications(data);
+      } catch (error) {
+        console.error("Failed to fetch notifications:", error);
+      }
+    };
+
+    fetchNotifications();
+
+    // Optional: Poll for notifications every 30 seconds
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
 
   const handleLoginSuccess = (user: User) => {
     setCurrentUser(user);
@@ -256,6 +277,4 @@ export default function App() {
 
 
 
-// Trebuie de adaugat ceva statistici la organizatori si admini
-// + trebuie de vazut ce e cu validarea si trnsimiterea de qr code pentru evenimente
 // + la evenimentele mele de adaugat o sectiune cu 'Am participat' si la particip de gandit cum de pus evenimentele la trecut
