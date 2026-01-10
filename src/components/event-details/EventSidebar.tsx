@@ -1,5 +1,4 @@
-import { useNavigate } from "react-router-dom";
-import { MapPin, Trash2 } from "lucide-react";
+import { MapPin, Trash2, ExternalLink } from "lucide-react";
 import { Button } from "../ui/button";
 import type { Event, User } from "../../types";
 
@@ -42,7 +41,16 @@ export function EventSidebar({
   onDeleteClick,
   isDeleting,
 }: EventSidebarProps) {
-  const navigate = useNavigate();
+
+  const handleOpenMaps = () => {
+    if (!event.location) return;
+    
+    // Encode the location string to be URL-safe (e.g., spaces becomes %20)
+    const encodedLocation = encodeURIComponent(event.location);
+    
+    // Open Google Maps search in a new tab
+    window.open(`https://www.google.com/maps/search/?api=1&query=${encodedLocation}`, '_blank');
+  };
 
   return (
     <div className="space-y-6">
@@ -56,13 +64,6 @@ export function EventSidebar({
           </div>
           <div>
             <div className="font-medium">{event.organizer}</div>
-            <Button
-              variant="link"
-              className="p-0 h-auto text-sm text-blue-600"
-              onClick={() => navigate(`/profile`)}
-            >
-              Vezi profil
-            </Button>
           </div>
         </div>
 
@@ -88,13 +89,20 @@ export function EventSidebar({
 
       <div className="bg-white rounded-lg p-6 border shadow-sm">
         <h3 className="mb-4 font-semibold">Locație</h3>
-        <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center mb-3">
-          <MapPin className="h-12 w-12 text-gray-400" />
+        {/* Make the map placeholder clickable */}
+        <div 
+          className="aspect-video bg-gray-100 rounded-lg flex flex-col items-center justify-center mb-3 cursor-pointer hover:bg-gray-200 transition-colors group relative overflow-hidden"
+          onClick={handleOpenMaps}
+          title="Deschide în Google Maps"
+        >
+          <MapPin className="h-12 w-12 text-gray-400 group-hover:text-blue-600 transition-colors mb-2" />
+          <span className="text-xs text-gray-500 font-medium group-hover:text-blue-600 transition-colors">
+            Vezi pe hartă
+          </span>
+          <ExternalLink className="absolute top-2 right-2 h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
         </div>
-        <p className="text-sm text-gray-700">{event.location}</p>
-        <Button variant="outline" className="w-full mt-3">
-          Deschide în Google Maps
-        </Button>
+
+        <p className="text-sm text-gray-700 font-medium">{event.location}</p>
       </div>
     </div>
   );
