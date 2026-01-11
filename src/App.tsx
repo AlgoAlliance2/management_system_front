@@ -43,7 +43,7 @@ export default function App() {
     handleToggleAttend,
     handleClearFilters,
     hasActiveFilters,
-  } = useEventLogic(searchQuery, isAuthenticated);
+  } = useEventLogic(searchQuery, isAuthenticated, currentUser?.role);
 
   const attendingEvents = events.filter((e) => e.isAttending);
   const savedEvents = events.filter((e) => e.isSaved);

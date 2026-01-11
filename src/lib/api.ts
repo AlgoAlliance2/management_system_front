@@ -76,6 +76,11 @@ export const eventsApi = {
     return response.data;
   },
 
+  getApproved: async () => {
+    const response = await api.get<AppEvent[]>('/events/approved');
+    return response.data;
+  },
+
   create: async (data: CreateEventInput) => {
     const response = await api.post<AppEvent>('/events', data);
     return response.data;
