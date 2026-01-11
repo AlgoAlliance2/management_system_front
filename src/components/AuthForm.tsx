@@ -187,12 +187,6 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
                 <Button type="submit" className="w-full bg-blue-600" disabled={isLoading}>
                   {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Autentificare"}
                 </Button>
-
-                <div className="text-center">
-                  <Button variant="link" className="text-sm text-blue-600">
-                    Ai uitat parola?
-                  </Button>
-                </div>
               </form>
             </TabsContent>
 
