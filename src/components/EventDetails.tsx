@@ -107,6 +107,18 @@ export function EventDetails({
     }
   };
 
+  const handleResubmit = async () => {
+    try {
+        await eventsApi.resubmit(event.id);
+        toast.success("Evenimentul a fost trimis pentru reevaluare.");
+        // Optimistically update local state
+        setEvent(prev => prev ? { ...prev, status: 'pending', rejectionReason: undefined } : prev);
+        onEventUpdated?.();
+    } catch (error) {
+        toast.error("Eroare la retrimiterea evenimentului.");
+    }
+  };
+
   const confirmDelete = async () => {
     setIsDeleting(true);
     try {
@@ -234,6 +246,7 @@ export function EventDetails({
         isOrganizer={isOrganizer}
         onApprove={handleApprove}
         onRejectClick={() => setShowRejectModal(true)}
+        onResubmit={handleResubmit}
       />
 
 

@@ -119,6 +119,12 @@ export const eventsApi = {
   reject: async (id: string, reason: string) => {
     const response = await api.post<AppEvent>(`/events/${id}/reject`, { reason });
     return response.data;
+  },
+
+  resubmit: async (id: string) => {
+    // Backend should set status to 'pending' and clear rejectionReason
+    const response = await api.post<AppEvent>(`/events/${id}/resubmit`);
+    return response.data;
   }
 };
 
