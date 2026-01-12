@@ -236,7 +236,9 @@ export default function App() {
             />
 
             {/* Organizer Route */}
-            <Route path="/organizer" element={<OrganizerPanel events={events} user={currentUser} />} />
+            {(currentUser.role === 'organizer' || currentUser.role === 'admin') && (
+              <Route path="/organizer" element={<OrganizerPanel events={events} user={currentUser} />} />
+            )}
 
             {/* Admin Route - Only accessible if user role is admin */}
             {currentUser.role === 'admin' && (
@@ -253,7 +255,9 @@ export default function App() {
               />
             }
             />
-            <Route path="/create-event" element={<CreateEventForm onSubmit={handleCreateEventSubmit} />} />
+            {(currentUser.role === 'organizer' || currentUser.role === 'admin') && (
+              <Route path="/create-event" element={<CreateEventForm onSubmit={handleCreateEventSubmit} />} />
+            )}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
