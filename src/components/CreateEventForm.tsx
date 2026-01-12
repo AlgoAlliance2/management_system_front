@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom"; // 1. Import hook
-import { ArrowLeft, Upload, X } from "lucide-react";
+import { ArrowLeft, Upload, X, Clock } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
@@ -41,6 +41,9 @@ export function CreateEventForm({ onSubmit }: CreateEventFormProps) {
     maxAttendees: "",
     imageUrl: "",
   });
+
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -102,6 +105,31 @@ export function CreateEventForm({ onSubmit }: CreateEventFormProps) {
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors({ ...errors, [field]: "" });
+    }
+  };
+
+  const handleTimeInput = (type: 'start' | 'end', value: string) => {
+    let newStart = startTime;
+    let newEnd = endTime;
+
+    if (type === 'start') {
+        setStartTime(value);
+        newStart = value;
+    } else {
+        setEndTime(value);
+        newEnd = value;
+    }
+
+    // Clear specific time error if user interacts
+    if (errors.time) setErrors((prev) => ({ ...prev, time: "" }));
+
+    // Update the main formData string
+    if (newStart && newEnd) {
+        updateFormData("time", `${newStart} - ${newEnd}`);
+    } else if (newStart) {
+        updateFormData("time", newStart);
+    } else {
+        updateFormData("time", "");
     }
   };
 
@@ -239,7 +267,7 @@ export function CreateEventForm({ onSubmit }: CreateEventFormProps) {
                     type="date"
                     value={formData.date}
                     onChange={(e) => updateFormData("date", e.target.value)}
-                    className={errors.date ? "border-red-500" : ""}
+                    className={(errors.date ? "border-red-500" : "")}
                     min={new Date().toISOString().split("T")[0]}
                   />
                   {errors.date && (
@@ -248,18 +276,36 @@ export function CreateEventForm({ onSubmit }: CreateEventFormProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="time">
-                    Ora <span className="text-red-500">*</span>
+                  <Label htmlFor="startTime">
+                    Interval Orar <span className="text-red-500">*</span>
                   </Label>
-                  <Input
-                    id="time"
-                    placeholder="ex: 14:00 - 18:00"
-                    value={formData.time}
-                    onChange={(e) => updateFormData("time", e.target.value)}
-                    className={errors.time ? "border-red-500" : ""}
-                  />
-                  {errors.time && (
+                  <div className="flex items-center gap-2">
+                    <div>
+                        <Input
+                            id="startTime"
+                            type="time"
+                            value={startTime}
+                            onChange={(e) => handleTimeInput('start', e.target.value)}
+                            className={errors.time ? "border-red-500" : ""}
+                        />
+                    </div>
+                    <span className="text-gray-400">-</span>
+                    <div>
+                        <Input
+                            id="endTime"
+                            type="time"
+                            value={endTime}
+                            onChange={(e) => handleTimeInput('end', e.target.value)}
+                            className={errors.time ? "border-red-500" : ""}
+                        />
+                    </div>
+                  </div>
+                  {errors.time ? (
                     <p className="text-sm text-red-500">{errors.time}</p>
+                  ) : (
+                    <p className="text-xs text-gray-500">
+                        Ora de început și ora de sfârșit (opțional)
+                    </p>
                   )}
                 </div>
               </div>
@@ -373,7 +419,10 @@ export function CreateEventForm({ onSubmit }: CreateEventFormProps) {
                   </div>
                   <div>
                     <span className="text-gray-600">Ora:</span>{" "}
-                    <span>{formData.time}</span>
+                    <span className="flex items-center gap-1 inline-flex">
+                        <Clock className="h-3 w-3" />
+                        {formData.time}
+                    </span>
                   </div>
                   <div>
                     <span className="text-gray-600">Locație:</span>{" "}

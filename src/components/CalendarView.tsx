@@ -16,6 +16,9 @@ export function CalendarView({ events, onToggleSave }: CalendarViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
+  // Filter to show only approved events in the calendar
+  const approvedEvents = events.filter(event => event.status === 'approved');
+
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const calendarStart = startOfWeek(monthStart, { locale: ro });
@@ -24,7 +27,8 @@ export function CalendarView({ events, onToggleSave }: CalendarViewProps) {
   const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
   const getEventsForDay = (day: Date) => {
-    return events.filter(event => isSameDay(new Date(event.date), day));
+    // Use approvedEvents instead of events
+    return approvedEvents.filter(event => isSameDay(new Date(event.date), day));
   };
 
   const selectedDayEvents = selectedDate ? getEventsForDay(selectedDate) : [];
@@ -131,17 +135,17 @@ export function CalendarView({ events, onToggleSave }: CalendarViewProps) {
         </div>
       )}
 
-      {/* Upcoming Events Preview */}
+      {/* Upcoming Events Preview (Using approvedEvents) */}
       {!selectedDate && (
         <div className="bg-white rounded-lg p-6 border">
           <h3 className="mb-4">Evenimente în {format(currentMonth, 'MMMM', { locale: ro })}</h3>
-          {events
+          {approvedEvents
             .filter(event => isSameMonth(new Date(event.date), currentMonth))
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
             .slice(0, 5)
             .length > 0 ? (
             <div className="space-y-4">
-              {events
+              {approvedEvents
                 .filter(event => isSameMonth(new Date(event.date), currentMonth))
                 .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                 .slice(0, 5)

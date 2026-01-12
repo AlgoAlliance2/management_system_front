@@ -10,7 +10,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
-  FileText
+  FileText,
+  Trash2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
@@ -20,7 +21,8 @@ import { toast } from "sonner";
 import type { Event, User, UserRole } from "../types";
 import { isFuture } from "date-fns";
 import { usersApi } from "../lib/api";
-import { useNavigate } from "react-router-dom"; // Need navigation
+import { useNavigate } from "react-router-dom";
+import { ConfirmModal } from "./ConfirmModal"; // Import Modal
 
 interface AdminPanelProps {
   events: Event[];
@@ -35,6 +37,9 @@ export function AdminPanel({ events, user }: AdminPanelProps) {
   const [roleFilter, setRoleFilter] = useState<UserRole | "all">("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [isDeletingUser, setIsDeletingUser] = useState(false);
 
   const pendingEvents = events.filter(e => e.status === 'pending');
 
@@ -104,6 +109,27 @@ export function AdminPanel({ events, user }: AdminPanelProps) {
     if (newPage >= 1 && newPage <= totalPages) setCurrentPage(newPage);
   };
 
+  const handleDeleteClick = (targetUser: User) => {
+    setUserToDelete(targetUser);
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    setIsDeletingUser(true);
+    try {
+      await usersApi.delete(userToDelete.id);
+      setUsers(prev => prev.filter(u => u.id !== userToDelete.id));
+      toast.success(`Utilizatorul ${userToDelete.name} a fost șters.`);
+    } catch (error) {
+      console.error(error);
+      toast.error("Nu s-a putut șterge utilizatorul.");
+    } finally {
+      setIsDeletingUser(false);
+      setUserToDelete(null); // Close modal
+    }
+  };
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -155,7 +181,7 @@ export function AdminPanel({ events, user }: AdminPanelProps) {
 
       {/* Global Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {/* ... stats cards (same as before) ... */}
+        {/* ... stats cards ... */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Evenimente Totale</CardTitle>
@@ -259,20 +285,33 @@ export function AdminPanel({ events, user }: AdminPanelProps) {
                           </span>
                         </td>
                         <td className="p-4 align-middle text-right">
-                          <Select
-                            value={u.role}
-                            onValueChange={(val) => handleRoleChange(u.id, val as UserRole)}
-                            disabled={u.id === user?.id}
-                          >
-                            <SelectTrigger className="w-[130px] ml-auto h-8 text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="student">Student</SelectItem>
-                              <SelectItem value="organizer">Organizator</SelectItem>
-                              <SelectItem value="admin">Admin</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <div className="flex justify-end gap-2">
+                            <Select
+                              value={u.role}
+                              onValueChange={(val) => handleRoleChange(u.id, val as UserRole)}
+                              disabled={u.id === user?.id}
+                            >
+                              <SelectTrigger className="w-[110px] h-8 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="student">Student</SelectItem>
+                                <SelectItem value="organizer">Organizator</SelectItem>
+                                <SelectItem value="admin">Admin</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            {u.role !== 'admin' && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                onClick={() => handleDeleteClick(u)}
+                                title="Șterge Utilizator"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -301,6 +340,36 @@ export function AdminPanel({ events, user }: AdminPanelProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Existing Categories Card */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card className="col-span-2">
+          <CardHeader>
+            <CardTitle>Distribuție Categorii Evenimente</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {Object.entries(categories).map(([name, count]) => (
+                <div key={name} className="bg-gray-50 p-4 rounded-lg text-center">
+                  <div className="text-xl font-bold text-gray-900">{count}</div>
+                  <div className="text-sm text-gray-500 capitalize">{name}</div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <ConfirmModal
+        isOpen={!!userToDelete}
+        onClose={() => setUserToDelete(null)}
+        onConfirm={confirmDeleteUser}
+        title="Ștergere Utilizator"
+        description={`Ești sigur că vrei să ștergi utilizatorul "${userToDelete?.name}"? Această acțiune este ireversibilă.`}
+        confirmLabel="Șterge"
+        isDestructive={true}
+        isLoading={isDeletingUser}
+      />
     </div>
   );
 }

@@ -273,8 +273,3 @@ export default function App() {
     </BrowserRouter>
   );
 }
-
-
-
-
-// + la evenimentele mele de adaugat o sectiune cu 'Am participat' si la particip de gandit cum de pus evenimentele la trecut

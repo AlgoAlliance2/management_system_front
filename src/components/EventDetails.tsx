@@ -23,13 +23,15 @@ import { format } from "date-fns";
 import { ro } from "date-fns/locale";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { toast } from "sonner";
-import { eventsApi } from "../lib/api"; // Updated import to use named export
+import { eventsApi } from "../lib/api";
 import { ConfirmModal } from "./ConfirmModal";
+
 import { EventStatusBanners } from "./event-details/EventStatusBanners";
 import { EventSidebar } from "./event-details/EventSidebar";
 import { EventComments } from "./event-details/EventComments";
 import type { EventDetailsProps } from "./event-details/EventSidebar";
 import { categoryLabels, categoryColors } from "./event-details/EventSidebar";
+import { EventAttendees } from "./event-details/EventAttendees";
 
 
 export function EventDetails({
@@ -549,6 +551,10 @@ export function EventDetails({
                 </p>
               )}
             </div>
+
+            {(isOrganizer || isAdmin) && (
+              <EventAttendees eventId={event.id} />
+            )}
 
             {/* Comments Section */}
             <EventComments

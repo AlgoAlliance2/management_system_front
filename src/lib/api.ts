@@ -67,6 +67,11 @@ export const usersApi = {
   updateRole: async (userId: string, role: UserRole) => {
     const response = await api.patch<User>(`/users/${userId}/role`, { role });
     return response.data;
+  },
+
+  delete: async (userId: string) => {
+    const response = await api.delete<{ success: boolean }>(`/users/${userId}`);
+    return response.data;
   }
 };
 
@@ -124,6 +129,11 @@ export const eventsApi = {
   resubmit: async (id: string) => {
     // Backend should set status to 'pending' and clear rejectionReason
     const response = await api.post<AppEvent>(`/events/${id}/resubmit`);
+    return response.data;
+  },
+
+  getAttendees: async (id: string) => {
+    const response = await api.get<User[]>(`/events/allAttending/${id}`);
     return response.data;
   }
 };
