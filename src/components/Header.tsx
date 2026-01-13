@@ -43,12 +43,10 @@ export function Header({
     { label: "Evenimentele Mele", path: "/profile" },
   ];
 
-  // Organizer Panel (for Organizers & Admins)
   if (currentUser?.role === "organizer" || currentUser?.role === "admin") {
     menuItems.push({ label: "Panou Organizator", path: "/organizer" });
   }
 
-  // Admin Panel (Strictly for Admins)
   if (currentUser?.role === "admin") {
     menuItems.push({ label: "Panou Admin", path: "/admin" });
   }

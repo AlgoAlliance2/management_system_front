@@ -99,19 +99,6 @@ export function EventFilters({
             ))}
           </SelectContent>
         </Select>
-
-        <Select value={selectedTimeframe} onValueChange={(value: any) => onTimeframeChange(value)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Selectează perioada" />
-          </SelectTrigger>
-          <SelectContent>
-            {timeframes.map((tf) => (
-              <SelectItem key={tf.value} value={tf.value}>
-                {tf.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
 
       {/* Additional Filters */}

@@ -145,7 +145,8 @@ export function useEventLogic(searchQuery: string, enabled: boolean = true, user
           event.title?.toLowerCase().includes(query) ||
           event.description?.toLowerCase().includes(query) ||
           event.location?.toLowerCase().includes(query) ||
-          event.organizer?.toLowerCase().includes(query);
+          event.organizer?.toLowerCase().includes(query) ||
+          event.category?.toLowerCase().includes(query);
         if (!matchesSearch) return false;
       }
 
