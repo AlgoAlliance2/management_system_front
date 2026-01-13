@@ -140,6 +140,20 @@ export default function App() {
     setShowNotifications(false);
   };
 
+  const handleDeleteNotification = async (notificationId: string) => {
+    try {
+      // Use centralized API
+      await notificationsApi.delete(notificationId);
+      setNotifications((prev) =>
+        prev.filter((n) => n.id !== notificationId)
+      );
+      toast.success("Notificare ștearsă cu succes");
+    } catch (error) {
+      console.error("Failed to delete notification:", error);
+      toast.error("Nu s-a putut șterge notificarea.");
+    }
+  };
+
   const handleCreateEventSubmit = async (eventData: CreateEventInput) => {
     try {
       // Use centralized API
@@ -269,6 +283,7 @@ export default function App() {
             onNotificationClick={handleNotificationClick}
             onMarkAsRead={handleMarkAsRead}
             onMarkAllAsRead={handleMarkAllAsRead}
+            onDelete={handleDeleteNotification}
           />
         )}
 

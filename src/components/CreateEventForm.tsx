@@ -66,12 +66,26 @@ export function CreateEventForm({ onSubmit }: CreateEventFormProps) {
     }
 
     if (currentStep === 2) {
+      const today = new Date().toISOString().split("T")[0];
+
       if (!formData.date) {
         newErrors.date = "Data este obligatorie";
+      } else if (formData.date < today) {
+        newErrors.date = "Data nu poate fi în trecut";
       }
-      if (!formData.time) {
-        newErrors.time = "Ora este obligatorie";
+
+      // Logic for Time validation
+      if (!startTime) {
+        newErrors.time = "Ora de început este obligatorie";
+      } else if (endTime && startTime >= endTime) {
+        newErrors.time = "Ora de sfârșit trebuie să fie după ora de început";
       }
+
+      if (formData.maxAttendees && Number(formData.maxAttendees) <= 0) {
+        newErrors.maxAttendees =
+          "Numărul maxim de participanți trebuie să fie un număr pozitiv";
+      }
+      
       if (!formData.location.trim()) {
         newErrors.location = "Locația este obligatorie";
       }
@@ -339,7 +353,11 @@ export function CreateEventForm({ onSubmit }: CreateEventFormProps) {
                     updateFormData("maxAttendees", e.target.value)
                   }
                   min="1"
+                  className={errors.maxAttendees ? "border-red-500" : ""}
                 />
+                {errors.maxAttendees && (
+                  <p className="text-sm text-red-500">{errors.maxAttendees}</p>
+                )}
                 <p className="text-sm text-gray-500">
                   Lasă câmpul gol pentru a permite un număr nelimitat de
                   participanți
@@ -355,41 +373,42 @@ export function CreateEventForm({ onSubmit }: CreateEventFormProps) {
 
               <div className="space-y-2">
                 <Label htmlFor="imageUrl">Imagine eveniment (opțional)</Label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                
+                {/* Input is always visible now */}
+                <Input
+                  id="imageUrl"
+                  type="url"
+                  placeholder="https://example.com/image.jpg"
+                  value={formData.imageUrl}
+                  onChange={(e) =>
+                    updateFormData("imageUrl", e.target.value)
+                  }
+                  className="mb-4"
+                />
+
+                {/* Preview Area Container */}
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center min-h-[200px] flex items-center justify-center bg-gray-50">
                   {formData.imageUrl ? (
-                    <div className="relative">
+                    <div className="relative w-full">
                       <img
                         src={formData.imageUrl}
                         alt="Preview"
-                        className="max-h-64 mx-auto rounded"
+                        className="max-h-64 mx-auto rounded object-contain shadow-sm"
                       />
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="absolute top-2 right-2 bg-white"
+                        className="absolute top-2 right-2 bg-white/80 hover:bg-white shadow-sm"
                         onClick={() => updateFormData("imageUrl", "")}
                       >
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
                   ) : (
-                    <div>
-                      <Upload className="h-12 w-12 mx-auto text-gray-400 mb-3" />
-                      <p className="text-gray-600 mb-2">
-                        Încarcă o imagine reprezentativă
-                      </p>
-                      <Input
-                        id="imageUrl"
-                        type="url"
-                        placeholder="https://example.com/image.jpg"
-                        value={formData.imageUrl}
-                        onChange={(e) =>
-                          updateFormData("imageUrl", e.target.value)
-                        }
-                        className="max-w-md mx-auto"
-                      />
-                      <p className="text-sm text-gray-500 mt-2">
-                        Introdu URL-ul imaginii
+                    <div className="flex flex-col items-center text-gray-400">
+                      <Upload className="h-12 w-12 mb-3" />
+                      <p className="text-sm">
+                        Previzualizarea imaginii va apărea aici
                       </p>
                     </div>
                   )}

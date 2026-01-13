@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { X, Bell, Calendar, AlertCircle, FileText, CheckCircle2 } from "lucide-react";
+import { X, Bell, Calendar, AlertCircle, FileText, CheckCircle2, Trash2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
 import type { Notification } from "../types";
@@ -12,6 +12,7 @@ interface NotificationsPanelProps {
   onNotificationClick: (notification: Notification) => void;
   onMarkAsRead: (notificationId: string) => void;
   onMarkAllAsRead: () => void;
+  onDelete: (notificationId: string) => void;
 }
 
 export function NotificationsPanel({
@@ -20,6 +21,7 @@ export function NotificationsPanel({
   onNotificationClick,
   onMarkAsRead,
   onMarkAllAsRead,
+  onDelete,
 }: NotificationsPanelProps) {
   const navigate = useNavigate();
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -54,70 +56,90 @@ export function NotificationsPanel({
   return (
     <div className="fixed inset-0 z-50 bg-black/50" onClick={onClose}>
       <div
-        className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl"
+        className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex h-full flex-col">
-          <div className="flex items-center justify-between border-b p-4">
-            <div>
-              <h2>Notificări</h2>
-              {unreadCount > 0 && (
-                <p className="text-sm text-gray-600">
-                  {unreadCount} notificări necitite
-                </p>
-              )}
-            </div>
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="h-5 w-5" />
+        {/* Header */}
+        <div className="flex items-center justify-between border-b p-4 flex-shrink-0">
+          <div>
+            <h2 className="font-semibold text-lg">Notificări</h2>
+            {unreadCount > 0 && (
+              <p className="text-sm text-gray-600">
+                {unreadCount} notificări necitite
+              </p>
+            )}
+          </div>
+          <Button variant="ghost" size="icon" onClick={onClose}>
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+
+        {/* Mark all as read */}
+        {unreadCount > 0 && (
+          <div className="border-b p-3 flex-shrink-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onMarkAllAsRead}
+              className="w-full"
+            >
+              Marchează toate ca citite
             </Button>
           </div>
+        )}
 
-          {unreadCount > 0 && (
-            <div className="border-b p-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onMarkAllAsRead}
-                className="w-full"
-              >
-                Marchează toate ca citite
-              </Button>
-            </div>
-          )}
-
-          <ScrollArea className="flex-1">
+        {/* Notifications List - ScrollArea needs a fixed height container or flex-1 */}
+        <div className="flex-1 overflow-hidden">
+          <ScrollArea className="h-full">
             {notifications.length > 0 ? (
               <div className="divide-y">
                 {notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${!notification.read ? "bg-blue-50/50" : ""
-                      }`}
-                    onClick={() => handleItemClick(notification)}
+                    className={`group relative p-4 hover:bg-gray-50 transition-colors ${
+                      !notification.read ? "bg-blue-50/50" : ""
+                    }`}
                   >
-                    <div className="flex gap-3">
-                      <div className="flex-shrink-0 mt-1">
-                        {getIcon(notification.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2 mb-1">
-                          <h4 className="text-sm line-clamp-1 font-medium">
-                            {notification.title}
-                          </h4>
-                          {!notification.read && (
-                            <div className="h-2 w-2 rounded-full bg-blue-600 flex-shrink-0 mt-1" />
-                          )}
+                    <div 
+                      className="cursor-pointer"
+                      onClick={() => handleItemClick(notification)}
+                    >
+                      <div className="flex gap-3 pr-8"> {/* Add padding right for delete button */}
+                        <div className="flex-shrink-0 mt-1">
+                          {getIcon(notification.type)}
                         </div>
-                        <p className="text-sm text-gray-600 line-clamp-2 mb-2">
-                          {notification.message}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {format(notification.date, "dd MMM yyyy, HH:mm", {
-                            locale: ro,
-                          })}
-                        </p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <h4 className="text-sm line-clamp-1 font-medium">
+                              {notification.title}
+                            </h4>
+                            {!notification.read && (
+                              <div className="h-2 w-2 rounded-full bg-blue-600 flex-shrink-0 mt-1" />
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                            {notification.message}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {format(new Date(notification.date), "dd MMM yyyy, HH:mm", {
+                              locale: ro,
+                            })}
+                          </p>
+                        </div>
                       </div>
                     </div>
+                    
+                    {/* Delete Button - Absolute positioned */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(notification.id);
+                      }}
+                      className="absolute top-4 right-4 p-1 text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Șterge notificarea"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
                 ))}
               </div>

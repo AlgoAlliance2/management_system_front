@@ -152,6 +152,11 @@ export const notificationsApi = {
   markAllRead: async () => {
     const response = await api.patch<{ success: boolean }>('/notifications/read-all');
     return response.data;
+  },
+
+  delete: async (id: string) => {
+    const response = await api.delete<{ success: boolean }>(`/notifications/${id}`);
+    return response.data;
   }
 };
 
