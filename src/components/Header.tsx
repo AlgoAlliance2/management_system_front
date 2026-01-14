@@ -1,4 +1,4 @@
-import { Bell, Search, User, Plus, Menu } from "lucide-react";
+import { Bell, Search, User, Plus, Menu, QrCode } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -41,12 +41,15 @@ export function Header({
     { label: "Acasă", path: "/" },
     { label: "Calendar", path: "/calendar" },
     { label: "Evenimentele Mele", path: "/profile" },
+    { label: "Biletele Mele", path: "/tickets" }, // NEW LINK
   ];
 
+  // Organizer Panel (for Organizers & Admins)
   if (currentUser?.role === "organizer" || currentUser?.role === "admin") {
     menuItems.push({ label: "Panou Organizator", path: "/organizer" });
   }
 
+  // Admin Panel (Strictly for Admins)
   if (currentUser?.role === "admin") {
     menuItems.push({ label: "Panou Admin", path: "/admin" });
   }
@@ -113,16 +116,16 @@ export function Header({
                 {/* Create Event Button (Desktop) */}
                 {(currentUser.role === "organizer" ||
                   currentUser.role === "admin") && (
-                    <Button
-                      asChild
-                      className="hidden md:flex bg-blue-600 hover:bg-blue-700"
-                    >
-                      <Link to="/create-event">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Creează Eveniment
-                      </Link>
-                    </Button>
-                  )}
+                  <Button
+                    asChild
+                    className="hidden md:flex bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Link to="/create-event">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Creează Eveniment
+                    </Link>
+                  </Button>
+                )}
 
                 {/* Notifications */}
                 <Button
@@ -157,6 +160,15 @@ export function Header({
                     <DropdownMenuItem onClick={() => navigate("/profile")}>
                       Profilul Meu
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/tickets")}>
+                      <QrCode className="mr-2 h-4 w-4" /> Biletele Mele
+                    </DropdownMenuItem>
+                    {/* Extra link in dropdown for convenience */}
+                    {currentUser.role === "admin" && (
+                        <DropdownMenuItem onClick={() => navigate("/admin")}>
+                            Panou Administrator
+                        </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={onLogout}>
                       Deconectare

@@ -68,3 +68,14 @@ export interface Notification {
   read: boolean;
   eventId?: string;
 }
+
+
+export interface Ticket {
+  id: string;
+  eventId: string;
+  eventTitle: string;
+  eventDate: Date;
+  location: string;
+  status: 'valid' | 'used' | 'expired';
+  qrCodeData: string;
+}

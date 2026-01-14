@@ -10,10 +10,11 @@ import { AdminPanel } from "./components/AdminPanel";
 import { AuthForm } from "./components/AuthForm";
 import { CreateEventForm } from "./components/CreateEventForm";
 import { NotificationsPanel } from "./components/NotificationsPanel";
+import { TicketsPage } from "./components/TicketsPage"; // Import TicketsPage
 import { Toaster } from "./components/ui/sonner";
 import { useEventLogic } from "./hooks/useEventLogic";
 import { toast } from "sonner";
-import { auth, eventsApi, notificationsApi } from "./lib/api"; // Updated imports
+import { auth, eventsApi, notificationsApi } from "./lib/api"; 
 import type { User, Notification as AppNotification, CreateEventInput } from "./types";
 
 export default function App() {
@@ -22,15 +23,15 @@ export default function App() {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]); 
   const [showNotifications, setShowNotifications] = useState(false);
 
   const {
     events,
     filteredEvents,
     error: eventsError,
-    isLoading: isEventsLoading,
-    refetch,
+    isLoading: isEventsLoading, 
+    refetch, 
     selectedCategory,
     setSelectedCategory,
     selectedTimeframe,
@@ -51,7 +52,6 @@ export default function App() {
     (e) => e.organizerId === currentUser?.id
   );
 
-  // 1. Check for existing session on Mount
   useEffect(() => {
     const initAuth = async () => {
       const token = localStorage.getItem("authToken");
@@ -84,7 +84,7 @@ export default function App() {
     const fetchNotifications = async () => {
       try {
         const data = await notificationsApi.getAll();
-        setNotifications(data);
+        setNotifications(data as unknown as AppNotification[]);
       } catch (error) {
         console.error("Failed to fetch notifications:", error);
       }
@@ -92,7 +92,6 @@ export default function App() {
 
     fetchNotifications();
 
-    // Optional: Poll for notifications every 30 seconds
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
   }, [isAuthenticated]);
@@ -111,9 +110,8 @@ export default function App() {
 
   const handleMarkAsRead = async (notificationId: string) => {
     try {
-      // Use centralized API
       await notificationsApi.markRead(notificationId);
-
+      
       setNotifications((prev) =>
         prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
       );
@@ -125,9 +123,8 @@ export default function App() {
 
   const handleMarkAllAsRead = async () => {
     try {
-      // Use centralized API
       await notificationsApi.markAllRead();
-
+      
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       toast.success("Toate notificările au fost marcate ca citite");
     } catch (error) {
@@ -136,29 +133,23 @@ export default function App() {
     }
   };
 
+  const handleDeleteNotification = async (notificationId: string) => {
+    try {
+      setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+      toast.success("Notificare ștearsă");
+    } catch (error) {
+      console.error(error);
+      toast.error("Nu s-a putut șterge notificarea");
+    }
+  };
+
   const handleNotificationClick = () => {
     setShowNotifications(false);
   };
 
-  const handleDeleteNotification = async (notificationId: string) => {
-    try {
-      // Use centralized API
-      await notificationsApi.delete(notificationId);
-      setNotifications((prev) =>
-        prev.filter((n) => n.id !== notificationId)
-      );
-      toast.success("Notificare ștearsă cu succes");
-    } catch (error) {
-      console.error("Failed to delete notification:", error);
-      toast.error("Nu s-a putut șterge notificarea.");
-    }
-  };
-
   const handleCreateEventSubmit = async (eventData: CreateEventInput) => {
     try {
-      // Use centralized API
       await eventsApi.create(eventData);
-
       toast.success("Eveniment creat cu succes!");
       refetch();
     } catch (error) {
@@ -240,38 +231,35 @@ export default function App() {
             />
             <Route path="/calendar" element={<CalendarView events={events} onToggleSave={handleToggleSave} />} />
             <Route path="/profile" element={
-              <UserProfile user={currentUser}
-                attendingEvents={attendingEvents}
-                onToggleSave={handleToggleSave}
-                organizedEvents={organizedEvents}
-                savedEvents={savedEvents}
-              />
-            }
+              <UserProfile user={currentUser} 
+                attendingEvents={attendingEvents} 
+                onToggleSave={handleToggleSave} 
+                organizedEvents={organizedEvents} 
+                savedEvents={savedEvents} 
+                />
+              } 
             />
-
-            {/* Organizer Route */}
-            {(currentUser.role === 'organizer' || currentUser.role === 'admin') && (
-              <Route path="/organizer" element={<OrganizerPanel events={events} user={currentUser} />} />
-            )}
-
-            {/* Admin Route - Only accessible if user role is admin */}
+            
+            <Route path="/organizer" element={<OrganizerPanel events={events} user={currentUser} />} />
+            
             {currentUser.role === 'admin' && (
-              <Route path="/admin" element={<AdminPanel events={events} user={currentUser} />} />
+                <Route path="/admin" element={<AdminPanel events={events} user={currentUser} />} />
             )}
+
+            {/* New Tickets Route */}
+            <Route path="/tickets" element={<TicketsPage />} />
 
             <Route path="/event/:id" element={
-              <EventDetails
-                events={events}
-                currentUser={currentUser}
-                onEventUpdated={refetch}
-                onToggleAttend={handleToggleAttend}
-                onToggleSave={handleToggleSave}
-              />
-            }
+              <EventDetails 
+                events={events} 
+                currentUser={currentUser} 
+                onEventUpdated={refetch} 
+                onToggleAttend={handleToggleAttend} 
+                onToggleSave={handleToggleSave} 
+                />
+              } 
             />
-            {(currentUser.role === 'organizer' || currentUser.role === 'admin') && (
-              <Route path="/create-event" element={<CreateEventForm onSubmit={handleCreateEventSubmit} />} />
-            )}
+            <Route path="/create-event" element={<CreateEventForm onSubmit={handleCreateEventSubmit} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
@@ -286,7 +274,7 @@ export default function App() {
             onDelete={handleDeleteNotification}
           />
         )}
-
+        
         <Toaster position="bottom-right" />
       </div>
     </BrowserRouter>
