@@ -1,7 +1,8 @@
 import axios from 'axios';
 import type { User, Event as AppEvent, Comment, UserRole, CreateEventInput, Notification as AppNotification } from '../types';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_BACKEND_URL_PROD || import.meta.env.VITE_API_BACKEND_URL_LOCAL;
+console.log("API URL:", API_URL);
 
 const api = axios.create({
   baseURL: API_URL,
